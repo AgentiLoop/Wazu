@@ -16,7 +16,6 @@ final class PlayerController: ObservableObject {
     let player = AVPlayer()
     @Published private(set) var current: Item?
     @Published private(set) var isPlaying = false
-    @Published private(set) var isLoading = false
     @Published var error: String?
 
     private let client: HuluClient
@@ -49,7 +48,6 @@ final class PlayerController: ObservableObject {
         player.pause()
         player.replaceCurrentItem(with: nil)
         current = item
-        isLoading = true
         error = nil
         loadTask = Task {
             do {
@@ -71,7 +69,6 @@ final class PlayerController: ObservableObject {
                 self.error = error.localizedDescription
                 current = nil
             }
-            isLoading = false
         }
     }
 
@@ -82,7 +79,6 @@ final class PlayerController: ObservableObject {
         player.pause()
         player.replaceCurrentItem(with: nil)
         current = nil
-        isLoading = false
         updateNowPlayingInfo()
     }
 
@@ -92,7 +88,6 @@ final class PlayerController: ObservableObject {
             DispatchQueue.main.async {
                 guard let self, item.status == .failed, self.player.currentItem === item else { return }
                 self.error = item.error?.localizedDescription ?? "Playback failed"
-                self.isLoading = false
             }
         }
     }

@@ -186,7 +186,7 @@ struct HubView: View {
             } else if let error {
                 ContentUnavailableView(error, systemImage: "exclamationmark.triangle")
             } else {
-                ProgressView()
+                Color.clear
             }
         }
         .navigationTitle(title)
@@ -237,7 +237,7 @@ struct CollectionRow: View {
                         Button {
                             Task { await loadMore() }
                         } label: {
-                            if loadingMore { ProgressView() } else { Label("More", systemImage: "ellipsis") }
+                            Label("More", systemImage: "ellipsis")
                         }
                         .frame(width: 120, height: vertical ? 240 : 135)
                     }
@@ -346,7 +346,7 @@ struct LiveView: View {
             if let error {
                 ContentUnavailableView(error, systemImage: "exclamationmark.triangle")
             } else if channels.isEmpty {
-                ProgressView()
+                Color.clear
             } else {
                 ScrollView {
                     LazyVStack(spacing: 0) {
@@ -412,7 +412,6 @@ struct SearchView: View {
                     ForEach(results) { item in ItemCard(item: item) }
                 }
                 .padding(.horizontal, 20)
-                if searching { ProgressView().padding() }
             }
         }
         .navigationTitle("Search")
@@ -443,7 +442,6 @@ struct PlayerView: View {
                     .foregroundStyle(.white)
             } else {
                 VideoPlayerView(player: app.player.player)
-                if app.player.isLoading { ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity) }
             }
             Button {
                 app.player.stop()
