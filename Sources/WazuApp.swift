@@ -42,6 +42,8 @@ struct WazuApp: App {
                     .keyboardShortcut(.rightArrow, modifiers: .command)
                     .disabled(app.player.current == nil)
                 Divider()
+                Toggle("Float on Top", isOn: $app.playerFloats)
+                    .keyboardShortcut("t", modifiers: [.command, .control])
                 Button("Stop") { app.player.stop() }
                     .keyboardShortcut(".", modifiers: .command)
                     .disabled(app.player.current == nil)

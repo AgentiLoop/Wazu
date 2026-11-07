@@ -3,7 +3,8 @@
 //  Wazu
 //
 //  Sidebar of places beside a browse stack of hubs (rows of artwork), the live guide, and search.
-//  Playing something switches to the TV tab at the bottom of the sidebar, which holds the player.
+//  Playing something switches to the TV tab at the bottom of the sidebar, which holds the player; its
+//  split-out button moves the movie into its own window (PlayerWindow.swift).
 //
 
 import SwiftUI
@@ -61,10 +62,15 @@ struct Destination: Hashable {
 final class AppModel: ObservableObject {
     let client = HuluClient()
     let player: PlayerController
+    private lazy var playerWindow = PlayerWindowController(app: self)
 
     @Published var place: Place = .home { didSet { if place != .tv { path = [] } } }
     @Published var path: [Destination] = []
     @Published var showSignIn = !HuluClient.isSignedIn
+    /// The split-out button on the TV tab: the movie plays in its own window instead of the tab.
+    @Published var splitOut = false
+    /// Playback > Float on Top: the split-out player window stays above other windows.
+    @Published var playerFloats = false { didSet { playerWindow.isFloating = playerFloats } }
     /// Bumped on sign-in/out so the views reload.
     @Published var session = 0
 
@@ -80,8 +86,9 @@ final class AppModel: ObservableObject {
         }
     }
 
-    /// Starts playback and shows it on the TV tab.
+    /// Starts playback and shows it on the TV tab (or in the split-out window, if that is open).
     func play(_ item: Item) {
+        _ = playerWindow
         player.play(item)
         place = .tv
     }
@@ -129,7 +136,7 @@ struct ContentView: View {
     var body: some View {
         Group {
             if isFullScreen, app.place == .tv, app.player.current != nil {
-                PlayerView()
+                PlayerView(player: app.player, inWindow: false)
                     .toolbar(.hidden, for: .windowToolbar)
                     .ignoresSafeArea()
             } else {
@@ -140,7 +147,7 @@ struct ContentView: View {
                     .navigationSplitViewColumnWidth(min: 160, ideal: 180, max: 240)
                 } detail: {
                     if app.place == .tv {
-                        PlayerView()
+                        PlayerView(player: app.player, inWindow: false)
                     } else {
                         NavigationStack(path: $app.path) {
                             root
@@ -165,7 +172,7 @@ struct ContentView: View {
         switch app.place {
         case .live: LiveView()
         case .search: SearchView()
-        case .tv: PlayerView()
+        case .tv: PlayerView(player: app.player, inWindow: false)
         default: HubView(url: URL(string: "https://discover.hulu.com/content/v5/hubs/\(app.place.hub!)?schema=1&limit=30")!,
                          title: app.place.title)
         }
@@ -440,32 +447,61 @@ struct SearchView: View {
 
 // MARK: - Player
 
+/// The TV tab and the split-out window share this: the movie, or why there is none. On the tab a
+/// floating split-out button moves the movie to its own window; while it is there the tab says so.
 struct PlayerView: View {
     @EnvironmentObject var app: AppModel
+    @ObservedObject var player: PlayerController
+    let inWindow: Bool
 
     var body: some View {
-        ZStack(alignment: .topLeading) {
+        ZStack(alignment: .topTrailing) {
             Color.black
-            if let error = app.player.error {
+            if let error = player.error {
                 ContentUnavailableView(error, systemImage: "play.slash")
                     .foregroundStyle(.white)
-            } else if app.player.current == nil {
+            } else if player.current == nil {
                 ContentUnavailableView("Nothing Playing", systemImage: "tv", description: Text("Pick something to watch."))
                     .foregroundStyle(.white)
+            } else if app.splitOut && !inWindow {
+                ContentUnavailableView {
+                    Label("Playing in Its Own Window", systemImage: "rectangle.on.rectangle")
+                } description: {
+                    Text("Close that window to bring the movie back here.")
+                } actions: {
+                    Button("Bring Back") { app.splitOut = false }
+                }
+                .foregroundStyle(.white)
             } else {
-                VideoPlayerView(player: app.player.player)
+                VideoPlayerView(player: player.player)
+                if !inWindow {
+                    Button {
+                        app.splitOut = true
+                    } label: {
+                        Image(systemName: "rectangle.on.rectangle")
+                            .font(.title2)
+                            .padding(10)
+                            .background(.ultraThinMaterial, in: Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .help("Split Out: play in a separate window")
+                    .padding(16)
+                }
             }
-            Button {
-                app.player.stop()
-                app.player.error = nil
-            } label: {
-                Image(systemName: "xmark.circle.fill").font(.title).foregroundStyle(.white.opacity(0.8))
+            if !inWindow {
+                Button {
+                    player.stop()
+                    player.error = nil
+                } label: {
+                    Image(systemName: "xmark.circle.fill").font(.title).foregroundStyle(.white.opacity(0.8))
+                }
+                .buttonStyle(.plain)
+                .padding(12)
+                .keyboardShortcut(.escape, modifiers: [])
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .buttonStyle(.plain)
-            .padding(12)
-            .keyboardShortcut(.escape, modifiers: [])
         }
-        .navigationTitle(app.player.current?.title ?? "Wazu")
+        .navigationTitle(player.current?.title ?? "Wazu")
     }
 }
 

@@ -10,6 +10,7 @@
 		0C603BB087E4FA6FFF42B2AC /* WazuApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00FB43B1CEB34F9C56FAA38A /* WazuApp.swift */; };
 		3CF27BDCE41436E1D070B0C6 /* HuluClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 099C2F5A3339CE49E82C51CD /* HuluClient.swift */; };
 		89C7993A17A3B969235773EF /* Player.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44FC1FF2D0EFB082BD5413F2 /* Player.swift */; };
+		8A11C2D3E4F5A6B7C8D9E0F1 /* PlayerWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45AA1B2C3D4E5F6A7B8C9D0E /* PlayerWindow.swift */; };
 		F1BBB934D90E0787465AD7D2 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2491973EABAE889593628F3A /* Models.swift */; };
 		F3909391B0110BF4EC7265BF /* SignIn.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30931CFBD1F6D0BA61E82DC1 /* SignIn.swift */; };
 		F4ADD49EFEA7317B569FC798 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84C2A5C05915EC98647BAAA6 /* ContentView.swift */; };
@@ -23,6 +24,7 @@
 		30931CFBD1F6D0BA61E82DC1 /* SignIn.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignIn.swift; sourceTree = "<group>"; };
 		3FB3645DAB8DC035BC74EC5F /* Wazu.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Wazu.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		44FC1FF2D0EFB082BD5413F2 /* Player.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Player.swift; sourceTree = "<group>"; };
+		45AA1B2C3D4E5F6A7B8C9D0E /* PlayerWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerWindow.swift; sourceTree = "<group>"; };
 		84C2A5C05915EC98647BAAA6 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -43,6 +45,7 @@
 				078A4FAC0BFE35186418E656 /* Info.plist */,
 				2491973EABAE889593628F3A /* Models.swift */,
 				44FC1FF2D0EFB082BD5413F2 /* Player.swift */,
+				45AA1B2C3D4E5F6A7B8C9D0E /* PlayerWindow.swift */,
 				30931CFBD1F6D0BA61E82DC1 /* SignIn.swift */,
 				00FB43B1CEB34F9C56FAA38A /* WazuApp.swift */,
 			);
@@ -120,6 +123,7 @@
 				3CF27BDCE41436E1D070B0C6 /* HuluClient.swift in Sources */,
 				F1BBB934D90E0787465AD7D2 /* Models.swift in Sources */,
 				89C7993A17A3B969235773EF /* Player.swift in Sources */,
+				8A11C2D3E4F5A6B7C8D9E0F1 /* PlayerWindow.swift in Sources */,
 				F3909391B0110BF4EC7265BF /* SignIn.swift in Sources */,
 				0C603BB087E4FA6FFF42B2AC /* WazuApp.swift in Sources */,
 			);
