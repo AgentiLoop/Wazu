@@ -506,9 +506,22 @@ final class FocusingPlayerView: AVPlayerView {
 
     override func layout() {
         super.layout()
+        hideLoadingIndicators(in: self)
         guard claimsLeft > 0 else { return }
         claimFocus()
         if hasFocus { claimsLeft = 0 } else { claimsLeft -= 1 }
+    }
+
+    /// AVKit draws its own buffering spinner inside the player view; walk the hierarchy and hide it.
+    private func hideLoadingIndicators(in view: NSView) {
+        for sub in view.subviews {
+            let name = String(describing: type(of: sub))
+            if sub is NSProgressIndicator || name.contains("Loading") || name.contains("Spinner") || name.contains("ProgressIndicator") {
+                sub.isHidden = true
+            } else {
+                hideLoadingIndicators(in: sub)
+            }
+        }
     }
 
     override func mouseDown(with event: NSEvent) {
