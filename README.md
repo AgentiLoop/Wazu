@@ -2,15 +2,17 @@
 
 A personal Mac TV player for a Hulu subscription, in SwiftUI. Not for distribution.
 
-Hulu's video is FairPlay-encrypted, so the app doesn't pull streams itself: it hosts
-Hulu's own web player (hulu.com/hub/home) in a WebKit view, which gets the keys the
-normal way with your sign-in. Around it is a native shell:
+Like StarPlayrX, it talks to the service's own web API and plays natively: the same calls
+hulu.com's player makes (discover.hulu.com for browsing, guide.hulu.com for live TV,
+play.hulu.com for the stream) feed a native UI, and AVPlayer plays the FairPlay HLS stream
+with keys from Hulu's license server (AVContentKeySession). Sign-in happens once on hulu.com
+in a web view; its session cookies are what the API client uses.
 
-- Sidebar: Home, TV, Movies, Live TV, My Stuff, Search (⌘1–⌘6)
-- Back / Forward / Reload (⌘[ ⌘] ⌘R)
-- Play/Pause, skip ±10 s, Picture in Picture (Playback menu), and the keyboard's
-  media keys
-- The window title shows what's playing
+- Sidebar: Home, TV, Movies, Live TV, My Stuff, Search (⌘1–⌘6); ⌘[ goes back a page
+- Rows of artwork per hub; series pages list seasons and episodes; a Play button resumes
+- Live TV: every channel in the guide with what's on now
+- Player: AVKit's floating controls (full screen, Picture in Picture, audio/subtitle
+  menus), Play/Pause ⌘P, skip ±10 s, Stop ⌘., Esc closes; the keyboard's media keys work
 - Sign-in is remembered between launches (Wazu > Sign Out of Hulu clears it)
 
 ## Build
