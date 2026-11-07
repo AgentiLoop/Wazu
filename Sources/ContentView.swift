@@ -123,30 +123,42 @@ final class AppModel: ObservableObject {
 
 struct ContentView: View {
     @EnvironmentObject var app: AppModel
+    /// Window full screen (green button / View > Enter Full Screen): shows just the movie while one is playing.
+    @State private var isFullScreen = false
 
     var body: some View {
-        NavigationSplitView {
-            List(Place.allCases, selection: $app.place) { place in
-                Label(place.title, systemImage: place.icon).tag(place)
-            }
-            .navigationSplitViewColumnWidth(min: 160, ideal: 180, max: 240)
-        } detail: {
-            if app.place == .tv {
+        Group {
+            if isFullScreen, app.place == .tv, app.player.current != nil {
                 PlayerView()
+                    .toolbar(.hidden, for: .windowToolbar)
+                    .ignoresSafeArea()
             } else {
-                NavigationStack(path: $app.path) {
-                    root
-                        .navigationDestination(for: Destination.self) { destination in
-                            HubView(url: destination.url, title: destination.title)
+                NavigationSplitView {
+                    List(Place.allCases, selection: $app.place) { place in
+                        Label(place.title, systemImage: place.icon).tag(place)
+                    }
+                    .navigationSplitViewColumnWidth(min: 160, ideal: 180, max: 240)
+                } detail: {
+                    if app.place == .tv {
+                        PlayerView()
+                    } else {
+                        NavigationStack(path: $app.path) {
+                            root
+                                .navigationDestination(for: Destination.self) { destination in
+                                    HubView(url: destination.url, title: destination.title)
+                                }
                         }
+                        .id(app.session)
+                    }
                 }
-                .id(app.session)
             }
         }
         .frame(minWidth: 960, minHeight: 600)
         .sheet(isPresented: $app.showSignIn) {
             SignInView { app.session += 1 }
         }
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didEnterFullScreenNotification)) { _ in isFullScreen = true }
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didExitFullScreenNotification)) { _ in isFullScreen = false }
     }
 
     @ViewBuilder private var root: some View {
