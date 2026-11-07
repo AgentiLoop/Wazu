@@ -472,18 +472,6 @@ struct PlayerView: View {
                     .padding(16)
                 }
             }
-            if !inWindow {
-                Button {
-                    player.stop()
-                    player.error = nil
-                } label: {
-                    Image(systemName: "xmark.circle.fill").font(.title).foregroundStyle(.white.opacity(0.8))
-                }
-                .buttonStyle(.plain)
-                .padding(12)
-                .keyboardShortcut(.escape, modifiers: [])
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
         }
         .navigationTitle(player.current?.title ?? "Wazu")
     }
