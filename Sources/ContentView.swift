@@ -238,11 +238,7 @@ struct ItemCard: View {
             app.open(item)
         } label: {
             VStack(alignment: .leading, spacing: 4) {
-                AsyncImage(url: item.artwork(width: Int(size.width) * 2, height: Int(size.height) * 2)) { image in
-                    image.resizable().aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Rectangle().fill(.quaternary)
-                }
+                Artwork(url: item.artwork(width: Int(size.width) * 2, height: Int(size.height) * 2), title: item.title)
                 .frame(width: size.width, height: size.height)
                 .clipShape(RoundedRectangle(cornerRadius: 6))
                 .overlay(alignment: .topLeading) {
@@ -262,6 +258,44 @@ struct ItemCard: View {
         .contextMenu {
             if item.eab != nil { Button("Play") { app.player.play(item) } }
             if let browse = item.browse { Button("Show Details") { app.path.append(Destination(url: browse, title: item.title)) } }
+        }
+    }
+}
+
+/// A tile's image. img.hulu.com answers 408 while it renders a size it hasn't made yet, and AsyncImage
+/// never asks again, which left blank tiles; this retries until the image is ready, and reloads when a
+/// tile comes back on screen. Items with no artwork (genre links) get their name on a plain tile.
+struct Artwork: View {
+    let url: URL?
+    let title: String
+    @State private var image: NSImage?
+
+    private static let cache = NSCache<NSURL, NSImage>()
+
+    var body: some View {
+        ZStack {
+            if let image {
+                Image(nsImage: image).resizable().aspectRatio(contentMode: .fill)
+            } else if url == nil {
+                LinearGradient(colors: [.indigo.opacity(0.8), .teal.opacity(0.6)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                Text(title).font(.title3.bold()).multilineTextAlignment(.center).padding(12)
+            } else {
+                Rectangle().fill(.quaternary)
+            }
+        }
+        .task(id: url) {
+            guard let url else { image = nil; return }
+            if let cached = Self.cache.object(forKey: url as NSURL) { image = cached; return }
+            image = nil
+            for attempt in 0..<6 {
+                if attempt > 0 { try? await Task.sleep(for: .seconds(attempt)) }
+                guard !Task.isCancelled else { return }
+                if let (data, _) = try? await URLSession.shared.data(from: url), let loaded = NSImage(data: data) {
+                    Self.cache.setObject(loaded, forKey: url as NSURL)
+                    image = loaded
+                    return
+                }
+            }
         }
     }
 }

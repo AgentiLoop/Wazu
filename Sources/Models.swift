@@ -71,6 +71,8 @@ struct Item: Identifiable, Hashable {
     let description: String?
     /// img.hulu.com artwork; `size=WxH&format=jpeg` must be appended to get an image.
     let artwork: URL?
+    /// Poster-shaped artwork for vertical rows, when Hulu has one.
+    let verticalArtwork: URL?
     /// Playable when present: "EAB::<id>::<asset>::<bundle>" (never the "::NULL::NULL" placeholder).
     let eab: String?
     /// For live airings, the channel the playlist call needs.
@@ -106,7 +108,9 @@ struct Item: Identifiable, Hashable {
         }
 
         // Artwork: a view has visuals.artwork.<orientation>.image.path (search: .path); an entity has artwork.<type>.path.
+        // Genre links ("standard_text" rows) come with no artwork at all.
         var art: String?
+        var tall: String?
         if let orientations = visuals?["artwork"] as? [String: Any] {
             for key in ["horizontal_tile", "horizontal", "horizontal_video"] {
                 if let o = orientations[key] as? [String: Any] {
@@ -114,14 +118,23 @@ struct Item: Identifiable, Hashable {
                     if art != nil { break }
                 }
             }
-        }
-        if art == nil, let artworks = json["artwork"] as? [String: Any] {
-            for key in ["program.tile", "video.horizontal.hero", "detail.horizontal.hero", "network.tile", "brand.logo"] {
-                if let path = (artworks[key] as? [String: Any])?["path"] as? String { art = path; break }
+            for key in ["vertical_tile", "vertical"] where tall == nil {
+                if let o = orientations[key] as? [String: Any] {
+                    tall = (o["image"] as? [String: Any])?["path"] as? String ?? o["path"] as? String
+                }
             }
-            if art == nil, let first = artworks.values.first as? [String: Any] { art = first["path"] as? String }
+        }
+        if let artworks = json["artwork"] as? [String: Any] {
+            if art == nil {
+                for key in ["program.tile", "video.horizontal.hero", "detail.horizontal.hero", "network.tile", "brand.logo"] {
+                    if let path = (artworks[key] as? [String: Any])?["path"] as? String { art = path; break }
+                }
+                if art == nil, let first = artworks.values.first as? [String: Any] { art = first["path"] as? String }
+            }
+            if tall == nil { tall = (artworks["detail.vertical.hero"] as? [String: Any])?["path"] as? String }
         }
         artwork = art.flatMap(URL.init(string:))
+        verticalArtwork = tall.flatMap(URL.init(string:))
 
         let eab = playback?["eab"] as? String ?? bundle?["eab_id"] as? String
             ?? (json["personalization"] as? [String: Any])?["eab"] as? String
@@ -138,7 +151,8 @@ struct Item: Identifiable, Hashable {
 
     init(id: String, kind: String, title: String, subtitle: String?, artwork: URL?, eab: String?, channelId: String?) {
         self.id = id; self.kind = kind; self.title = title; self.subtitle = subtitle; self.description = nil
-        self.artwork = artwork; self.eab = eab; self.channelId = channelId; self.isLive = channelId != nil; self.browse = nil
+        self.artwork = artwork; self.verticalArtwork = nil
+        self.eab = eab; self.channelId = channelId; self.isLive = channelId != nil; self.browse = nil
     }
 
     /// Search results wrap strings as {"text": …}.
@@ -148,9 +162,10 @@ struct Item: Identifiable, Hashable {
         return nil
     }
 
+    /// Sized artwork; a portrait size picks the poster when there is one.
     func artwork(width: Int, height: Int) -> URL? {
-        guard let artwork else { return nil }
-        return URL(string: artwork.absoluteString + "&size=\(width)x\(height)&format=jpeg")
+        guard let art = height > width ? verticalArtwork ?? artwork : artwork else { return nil }
+        return URL(string: art.absoluteString + "&size=\(width)x\(height)&format=jpeg")
     }
 }
 
