@@ -3,48 +3,50 @@
 //  Wazu
 //
 //  Sidebar of places beside a browse stack of hubs (rows of artwork), the live guide, and search.
-//  Playing something covers the browse area with the player until it is closed.
+//  Playing something switches to the TV tab at the bottom of the sidebar, which holds the player.
 //
 
 import SwiftUI
 import AVKit
 
-/// Where the sidebar can take you.
+/// Where the sidebar can take you; TV is last: the player.
 enum Place: String, CaseIterable, Identifiable {
-    case home, tv, movies, live, myStuff, search
+    case home, shows, movies, live, myStuff, search, tv
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
         case .home: "Home"
-        case .tv: "TV"
+        case .shows: "TV Shows"
         case .movies: "Movies"
         case .live: "Live TV"
         case .myStuff: "My Stuff"
         case .search: "Search"
+        case .tv: "TV"
         }
     }
 
     var icon: String {
         switch self {
         case .home: "house"
-        case .tv: "tv"
+        case .shows: "tv"
         case .movies: "film"
         case .live: "antenna.radiowaves.left.and.right"
         case .myStuff: "plus.square.on.square"
         case .search: "magnifyingglass"
+        case .tv: "play.tv"
         }
     }
 
-    /// The discover hub behind the place (live and search are not hubs).
+    /// The discover hub behind the place (live, search and TV are not hubs).
     var hub: String? {
         switch self {
         case .home: "home"
-        case .tv: "tv"
+        case .shows: "tv"
         case .movies: "movies"
         case .myStuff: "watch-later"
-        case .live, .search: nil
+        case .live, .search, .tv: nil
         }
     }
 }
@@ -60,7 +62,7 @@ final class AppModel: ObservableObject {
     let client = HuluClient()
     let player: PlayerController
 
-    @Published var place: Place = .home { didSet { path = [] } }
+    @Published var place: Place = .home { didSet { if place != .tv { path = [] } } }
     @Published var path: [Destination] = []
     @Published var showSignIn = !HuluClient.isSignedIn
     /// Bumped on sign-in/out so the views reload.
@@ -78,20 +80,20 @@ final class AppModel: ObservableObject {
         }
     }
 
-    /// Plays an item and moves the sidebar to where it belongs (an episode switches to TV).
+    /// Starts playback and shows it on the TV tab.
     func play(_ item: Item) {
-        follow(item)
         player.play(item)
+        place = .tv
     }
 
-    /// Opens an item's page; shows and movies open under the TV and Movies places so the sidebar follows.
+    /// Opens an item's page; shows and movies open under the TV Shows and Movies places so the sidebar follows.
     func showDetails(_ item: Item) {
         guard let browse = item.browse else { return }
         follow(item)
         path.append(Destination(url: browse, title: item.title))
     }
 
-    /// Moves the sidebar to the place an item belongs to: TV for shows and episodes, Movies for movies,
+    /// Moves the sidebar to the place an item belongs to: TV Shows for shows and episodes, Movies for movies,
     /// Live TV for airings. Hulu's kind strings vary, so the browse URL (…/hubs/series/…, …/hubs/movie/…) counts too.
     private func follow(_ item: Item) {
         let kind = item.kind.lowercased()
@@ -102,7 +104,7 @@ final class AppModel: ObservableObject {
         } else if kind.contains("movie") || hub.contains("/hubs/movie") {
             target = .movies
         } else if kind.contains("series") || kind.contains("episode") || hub.contains("/hubs/series") {
-            target = .tv
+            target = .shows
         } else {
             target = nil
         }
@@ -129,7 +131,9 @@ struct ContentView: View {
             }
             .navigationSplitViewColumnWidth(min: 160, ideal: 180, max: 240)
         } detail: {
-            ZStack {
+            if app.place == .tv {
+                PlayerView()
+            } else {
                 NavigationStack(path: $app.path) {
                     root
                         .navigationDestination(for: Destination.self) { destination in
@@ -137,9 +141,6 @@ struct ContentView: View {
                         }
                 }
                 .id(app.session)
-                if app.player.current != nil || app.player.error != nil {
-                    PlayerView()
-                }
             }
         }
         .frame(minWidth: 960, minHeight: 600)
@@ -152,6 +153,7 @@ struct ContentView: View {
         switch app.place {
         case .live: LiveView()
         case .search: SearchView()
+        case .tv: PlayerView()
         default: HubView(url: URL(string: "https://discover.hulu.com/content/v5/hubs/\(app.place.hub!)?schema=1&limit=30")!,
                          title: app.place.title)
         }
@@ -351,8 +353,8 @@ struct LiveView: View {
                         ForEach(channels) { channel in
                             Button {
                                 guard let program = channel.program else { return }
-                                app.player.play(Item(id: channel.id, kind: "live", title: program.headline, subtitle: channel.name,
-                                                     artwork: nil, eab: program.eab, channelId: channel.id))
+                                app.play(Item(id: channel.id, kind: "live", title: program.headline, subtitle: channel.name,
+                                              artwork: nil, eab: program.eab, channelId: channel.id))
                             } label: {
                                 HStack(spacing: 12) {
                                     AsyncImage(url: URL(string: (channel.logo?.absoluteString ?? "") + "&size=120x120&format=png")) { image in
@@ -436,6 +438,9 @@ struct PlayerView: View {
             if let error = app.player.error {
                 ContentUnavailableView(error, systemImage: "play.slash")
                     .foregroundStyle(.white)
+            } else if app.player.current == nil {
+                ContentUnavailableView("Nothing Playing", systemImage: "tv", description: Text("Pick something to watch."))
+                    .foregroundStyle(.white)
             } else {
                 VideoPlayerView(player: app.player.player)
                 if app.player.isLoading { ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity) }
@@ -459,7 +464,7 @@ struct VideoPlayerView: NSViewRepresentable {
     let player: AVPlayer
 
     func makeNSView(context: Context) -> AVPlayerView {
-        let view = AVPlayerView()
+        let view = FocusingPlayerView()
         view.player = player
         view.controlsStyle = .floating
         view.showsFullScreenToggleButton = true
@@ -468,4 +473,52 @@ struct VideoPlayerView: NSViewRepresentable {
     }
 
     func updateNSView(_ nsView: AVPlayerView, context: Context) {}
+}
+
+/// Takes keyboard focus as soon as it is on screen, so space/arrows drive playback instead of the sidebar.
+/// SwiftUI hands focus back to the sidebar after the first attempt, so it keeps claiming it on every
+/// layout pass until it actually holds it, and again whenever the window becomes key.
+final class FocusingPlayerView: AVPlayerView {
+    override var acceptsFirstResponder: Bool { true }
+    private var keyObserver: NSObjectProtocol?
+    private var claimsLeft = 0
+
+    private var hasFocus: Bool {
+        guard let responder = window?.firstResponder as? NSView else { return false }
+        return responder === self || responder.isDescendant(of: self)
+    }
+
+    private func claimFocus() {
+        guard let window, !hasFocus else { return }
+        window.makeFirstResponder(self)
+    }
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        if let keyObserver { NotificationCenter.default.removeObserver(keyObserver) }
+        keyObserver = nil
+        guard let window else { return }
+        claimsLeft = 10
+        claimFocus()
+        DispatchQueue.main.async { [weak self] in self?.claimFocus() }
+        keyObserver = NotificationCenter.default.addObserver(forName: NSWindow.didBecomeKeyNotification, object: window, queue: .main) { [weak self] _ in
+            self?.claimFocus()
+        }
+    }
+
+    override func layout() {
+        super.layout()
+        guard claimsLeft > 0 else { return }
+        claimFocus()
+        if hasFocus { claimsLeft = 0 } else { claimsLeft -= 1 }
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        claimFocus()
+        super.mouseDown(with: event)
+    }
+
+    deinit {
+        if let keyObserver { NotificationCenter.default.removeObserver(keyObserver) }
+    }
 }
