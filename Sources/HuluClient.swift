@@ -4,8 +4,8 @@
 //
 //  Hulu's web API — the same calls hulu.com's own player makes: discover.hulu.com for browsing,
 //  guide.hulu.com for live TV, play.hulu.com for the stream, and bamgrid.com for FairPlay keys.
-//  Auth is the browser session: the cookies from signing in on hulu.com in the sign-in web view,
-//  which live in HTTPCookieStorage.shared.
+//  Auth is the browser session: the cookies the sign-in API answers with (SignIn.swift), which
+//  live in HTTPCookieStorage.shared.
 //
 
 import Foundation
@@ -182,11 +182,14 @@ actor HuluClient: StreamingService {
 enum HuluError: LocalizedError {
     case http(Int, String)
     case badResponse(String)
+    /// The sign-in API's own message ("We couldn't log you in. Please check your email and password…").
+    case signIn(String)
 
     var errorDescription: String? {
         switch self {
         case .http(let status, let message): status == 401 || status == 403 ? "Not signed in to Hulu." : "Hulu answered \(status): \(message)"
         case .badResponse(let what): "Unexpected answer from Hulu (\(what))."
+        case .signIn(let message): message
         }
     }
 }
