@@ -10,6 +10,7 @@
 		06B0CDD683815BD6DF402CC5 /* WazKit in Frameworks */ = {isa = PBXBuildFile; productRef = E79C1679EE5BF92361BBDF14 /* WazKit */; };
 		0C603BB087E4FA6FFF42B2AC /* WazuApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00FB43B1CEB34F9C56FAA38A /* WazuApp.swift */; };
 		3CF27BDCE41436E1D070B0C6 /* HuluClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 099C2F5A3339CE49E82C51CD /* HuluClient.swift */; };
+		958987F1820D5B8DF8F17596 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 62B285BF6878E442EBE3B8ED /* Assets.xcassets */; };
 		F1BBB934D90E0787465AD7D2 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2491973EABAE889593628F3A /* Models.swift */; };
 		F3909391B0110BF4EC7265BF /* SignIn.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30931CFBD1F6D0BA61E82DC1 /* SignIn.swift */; };
 		F4ADD49EFEA7317B569FC798 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84C2A5C05915EC98647BAAA6 /* ContentView.swift */; };
@@ -33,6 +34,7 @@
 		24A19869D7BE7E558AF9A799 /* WazuTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WazuTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		30931CFBD1F6D0BA61E82DC1 /* SignIn.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignIn.swift; sourceTree = "<group>"; };
 		3FB3645DAB8DC035BC74EC5F /* Wazu.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Wazu.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		62B285BF6878E442EBE3B8ED /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		84C2A5C05915EC98647BAAA6 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		C9F645560EC2494FB9BBEFE1 /* WazKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = WazKit; path = ../WazKit; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
@@ -77,6 +79,7 @@
 		7A7835BC55B11AF710AE02B9 /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				62B285BF6878E442EBE3B8ED /* Assets.xcassets */,
 				84C2A5C05915EC98647BAAA6 /* ContentView.swift */,
 				099C2F5A3339CE49E82C51CD /* HuluClient.swift */,
 				078A4FAC0BFE35186418E656 /* Info.plist */,
@@ -122,6 +125,7 @@
 			buildConfigurationList = 1D639F8FBE5130FCCC2B06D8 /* Build configuration list for PBXNativeTarget "Wazu" */;
 			buildPhases = (
 				6037ABF8F73984AA2C75CBD3 /* Sources */,
+				5177448BB53800DDE1ADDE66 /* Resources */,
 				88402A44099B74DC2842F1AB /* Frameworks */,
 			);
 			buildRules = (
@@ -177,6 +181,17 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		5177448BB53800DDE1ADDE66 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				958987F1820D5B8DF8F17596 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		2A228DD648E40A0962EA20DB /* Sources */ = {
