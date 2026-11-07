@@ -74,17 +74,40 @@ final class AppModel: ObservableObject {
         if item.browse != nil, !playable || item.eab == nil {
             showDetails(item)
         } else {
-            player.play(item)
+            play(item)
         }
+    }
+
+    /// Plays an item and moves the sidebar to where it belongs (an episode switches to TV).
+    func play(_ item: Item) {
+        follow(item)
+        player.play(item)
     }
 
     /// Opens an item's page; shows and movies open under the TV and Movies places so the sidebar follows.
     func showDetails(_ item: Item) {
         guard let browse = item.browse else { return }
-        // Only switch when it changes the place: setting it clears the stack.
-        if item.kind == "series", place != .tv { place = .tv }
-        if item.kind == "movie", place != .movies { place = .movies }
+        follow(item)
         path.append(Destination(url: browse, title: item.title))
+    }
+
+    /// Moves the sidebar to the place an item belongs to: TV for shows and episodes, Movies for movies,
+    /// Live TV for airings. Hulu's kind strings vary, so the browse URL (…/hubs/series/…, …/hubs/movie/…) counts too.
+    private func follow(_ item: Item) {
+        let kind = item.kind.lowercased()
+        let hub = item.browse?.path.lowercased() ?? ""
+        let target: Place?
+        if item.isLive || kind == "live" {
+            target = .live
+        } else if kind.contains("movie") || hub.contains("/hubs/movie") {
+            target = .movies
+        } else if kind.contains("series") || kind.contains("episode") || hub.contains("/hubs/series") {
+            target = .tv
+        } else {
+            target = nil
+        }
+        // Only switch when it changes the place: setting it clears the stack.
+        if let target, place != target { place = target }
     }
 
     func signOut() {
@@ -175,7 +198,7 @@ struct HubView: View {
             }
             if let focus = hub.focus {
                 Button {
-                    app.player.play(focus)
+                    app.play(focus)
                 } label: {
                     Label([focus.subtitle, focus.title].compactMap { $0 }.joined(separator: " · "), systemImage: "play.fill")
                 }
@@ -265,7 +288,7 @@ struct ItemCard: View {
         .buttonStyle(.plain)
         .help(item.description ?? item.title)
         .contextMenu {
-            if item.eab != nil { Button("Play") { app.player.play(item) } }
+            if item.eab != nil { Button("Play") { app.play(item) } }
             if item.browse != nil { Button("Show Details") { app.showDetails(item) } }
         }
     }
