@@ -7,34 +7,71 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		06B0CDD683815BD6DF402CC5 /* WazKit in Frameworks */ = {isa = PBXBuildFile; productRef = E79C1679EE5BF92361BBDF14 /* WazKit */; };
 		0C603BB087E4FA6FFF42B2AC /* WazuApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00FB43B1CEB34F9C56FAA38A /* WazuApp.swift */; };
 		3CF27BDCE41436E1D070B0C6 /* HuluClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 099C2F5A3339CE49E82C51CD /* HuluClient.swift */; };
-		89C7993A17A3B969235773EF /* Player.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44FC1FF2D0EFB082BD5413F2 /* Player.swift */; };
-		8A11C2D3E4F5A6B7C8D9E0F1 /* PlayerWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45AA1B2C3D4E5F6A7B8C9D0E /* PlayerWindow.swift */; };
 		F1BBB934D90E0787465AD7D2 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2491973EABAE889593628F3A /* Models.swift */; };
 		F3909391B0110BF4EC7265BF /* SignIn.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30931CFBD1F6D0BA61E82DC1 /* SignIn.swift */; };
 		F4ADD49EFEA7317B569FC798 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84C2A5C05915EC98647BAAA6 /* ContentView.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		F69CCE8BAE166DF50869E07F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = EAE62D6E09F07740628BA86B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C21FAC3D41B897D792E5165B;
+			remoteInfo = Wazu;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		00FB43B1CEB34F9C56FAA38A /* WazuApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WazuApp.swift; sourceTree = "<group>"; };
 		078A4FAC0BFE35186418E656 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		099C2F5A3339CE49E82C51CD /* HuluClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HuluClient.swift; sourceTree = "<group>"; };
 		2491973EABAE889593628F3A /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		24A19869D7BE7E558AF9A799 /* WazuTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WazuTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		30931CFBD1F6D0BA61E82DC1 /* SignIn.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignIn.swift; sourceTree = "<group>"; };
 		3FB3645DAB8DC035BC74EC5F /* Wazu.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Wazu.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		44FC1FF2D0EFB082BD5413F2 /* Player.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Player.swift; sourceTree = "<group>"; };
-		45AA1B2C3D4E5F6A7B8C9D0E /* PlayerWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerWindow.swift; sourceTree = "<group>"; };
 		84C2A5C05915EC98647BAAA6 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		C9F645560EC2494FB9BBEFE1 /* WazKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = WazKit; path = ../WazKit; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		88402A44099B74DC2842F1AB /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				06B0CDD683815BD6DF402CC5 /* WazKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		0A32EFC2F270A2E902FFB79F = {
 			isa = PBXGroup;
 			children = (
+				0BB3E9A41919A8DEDAB85B8D /* Packages */,
 				7A7835BC55B11AF710AE02B9 /* Sources */,
+				5D07319C1CFE974CF17D633C /* Tests */,
 				BE3F4D87A164576DA0656C17 /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		0BB3E9A41919A8DEDAB85B8D /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				C9F645560EC2494FB9BBEFE1 /* WazKit */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		5D07319C1CFE974CF17D633C /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Tests;
 			sourceTree = "<group>";
 		};
 		7A7835BC55B11AF710AE02B9 /* Sources */ = {
@@ -44,8 +81,6 @@
 				099C2F5A3339CE49E82C51CD /* HuluClient.swift */,
 				078A4FAC0BFE35186418E656 /* Info.plist */,
 				2491973EABAE889593628F3A /* Models.swift */,
-				44FC1FF2D0EFB082BD5413F2 /* Player.swift */,
-				45AA1B2C3D4E5F6A7B8C9D0E /* PlayerWindow.swift */,
 				30931CFBD1F6D0BA61E82DC1 /* SignIn.swift */,
 				00FB43B1CEB34F9C56FAA38A /* WazuApp.swift */,
 			);
@@ -56,6 +91,7 @@
 			isa = PBXGroup;
 			children = (
 				3FB3645DAB8DC035BC74EC5F /* Wazu.app */,
+				24A19869D7BE7E558AF9A799 /* WazuTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -63,11 +99,30 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		03B335C3EFF2A66CA0DD80BA /* WazuTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A010C8CCE80EA4E1C49E311F /* Build configuration list for PBXNativeTarget "WazuTests" */;
+			buildPhases = (
+				2A228DD648E40A0962EA20DB /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				003ED465A9FEF84C025AA9A7 /* PBXTargetDependency */,
+			);
+			name = WazuTests;
+			packageProductDependencies = (
+			);
+			productName = WazuTests;
+			productReference = 24A19869D7BE7E558AF9A799 /* WazuTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		C21FAC3D41B897D792E5165B /* Wazu */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 1D639F8FBE5130FCCC2B06D8 /* Build configuration list for PBXNativeTarget "Wazu" */;
 			buildPhases = (
 				6037ABF8F73984AA2C75CBD3 /* Sources */,
+				88402A44099B74DC2842F1AB /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -75,6 +130,7 @@
 			);
 			name = Wazu;
 			packageProductDependencies = (
+				E79C1679EE5BF92361BBDF14 /* WazKit */,
 			);
 			productName = Wazu;
 			productReference = 3FB3645DAB8DC035BC74EC5F /* Wazu.app */;
@@ -89,6 +145,10 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
+					03B335C3EFF2A66CA0DD80BA = {
+						DevelopmentTeam = 469UCUB275;
+						ProvisioningStyle = Automatic;
+					};
 					C21FAC3D41B897D792E5165B = {
 						DevelopmentTeam = 469UCUB275;
 						ProvisioningStyle = Automatic;
@@ -104,17 +164,28 @@
 			);
 			mainGroup = 0A32EFC2F270A2E902FFB79F;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				4C5E0ABE1F79E29428CA54ED /* XCLocalSwiftPackageReference "../WazKit" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = BE3F4D87A164576DA0656C17 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
 				C21FAC3D41B897D792E5165B /* Wazu */,
+				03B335C3EFF2A66CA0DD80BA /* WazuTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXSourcesBuildPhase section */
+		2A228DD648E40A0962EA20DB /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		6037ABF8F73984AA2C75CBD3 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -122,14 +193,20 @@
 				F4ADD49EFEA7317B569FC798 /* ContentView.swift in Sources */,
 				3CF27BDCE41436E1D070B0C6 /* HuluClient.swift in Sources */,
 				F1BBB934D90E0787465AD7D2 /* Models.swift in Sources */,
-				89C7993A17A3B969235773EF /* Player.swift in Sources */,
-				8A11C2D3E4F5A6B7C8D9E0F1 /* PlayerWindow.swift in Sources */,
 				F3909391B0110BF4EC7265BF /* SignIn.swift in Sources */,
 				0C603BB087E4FA6FFF42B2AC /* WazuApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		003ED465A9FEF84C025AA9A7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C21FAC3D41B897D792E5165B /* Wazu */;
+			targetProxy = F69CCE8BAE166DF50869E07F /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		1A7560862000B1D25489254B /* Release */ = {
@@ -295,6 +372,46 @@
 			};
 			name = Debug;
 		};
+		F6B91409B5A19DF12766D865 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = 469UCUB275;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.starplayrx.WazuTests;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Wazu.app/Contents/MacOS/Wazu";
+			};
+			name = Release;
+		};
+		FEF400C4BDB26386F979D511 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = 469UCUB275;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.starplayrx.WazuTests;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Wazu.app/Contents/MacOS/Wazu";
+			};
+			name = Debug;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -316,7 +433,30 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
+		A010C8CCE80EA4E1C49E311F /* Build configuration list for PBXNativeTarget "WazuTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FEF400C4BDB26386F979D511 /* Debug */,
+				F6B91409B5A19DF12766D865 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		4C5E0ABE1F79E29428CA54ED /* XCLocalSwiftPackageReference "../WazKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../WazKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		E79C1679EE5BF92361BBDF14 /* WazKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = WazKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = EAE62D6E09F07740628BA86B /* Project object */;
 }

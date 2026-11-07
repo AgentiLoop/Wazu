@@ -9,8 +9,11 @@
 //
 
 import Foundation
+import WazKit
 
-actor HuluClient {
+actor HuluClient: StreamingService {
+    nonisolated var name: String { "Hulu" }
+
     private static let discover = "https://discover.hulu.com/content/v5"
     private static let guide = "https://guide.hulu.com/guide"
     private static let playlist = "https://play.hulu.com/v6/playlist"
@@ -147,6 +150,11 @@ actor HuluClient {
             throw HuluError.http(status, String(decoding: data.prefix(200), as: UTF8.self))
         }
         return ckc
+    }
+
+    /// The license server wants the whole "skd://hulu/<kid>" URI as the content identifier.
+    nonisolated func contentIdentifier(forKeyURI uri: String) -> Data {
+        Data(uri.utf8)
     }
 
     // MARK: HTTP

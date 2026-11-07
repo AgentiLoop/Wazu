@@ -38,10 +38,13 @@ itself keeps in the browser.
 - Xcode 15 or later
 - [xcodegen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`) — the Xcode
   project is generated from `project.yml`
+- [WazKit](https://github.com/AgentiLoop/WazKit), the Swift package shared with Waze, cloned
+  next to this folder (`project.yml` points at `../WazKit`)
 
 ## Build
 
 ```sh
+git clone https://github.com/AgentiLoop/WazKit ../WazKit   # once, as a sibling of Wazu/
 xcodegen generate
 xcodebuild -project Wazu.xcodeproj -scheme Wazu -configuration Release -derivedDataPath build build
 open build/Build/Products/Release/Wazu.app
@@ -49,18 +52,35 @@ open build/Build/Products/Release/Wazu.app
 
 Re-run `xcodegen generate` after adding or removing files under `Sources/`.
 
+## WazKit
+
+The player, its split-out window, the sign-in sheet and the artwork tiles are
+[WazKit](https://github.com/AgentiLoop/WazKit); this app keeps only what is Hulu-specific.
+`HuluClient` adopts WazKit's `StreamingService` (certificate, license, and the content
+identifier Hulu's license server wants: the whole `skd://hulu/…` key URI), `Item` adopts
+`Tile`, and `AppModel.play` hands the player a `NowPlaying` plus the closure that calls
+`client.playback(eab:channelId:)`:
+
+```swift
+player.play(NowPlaying(id: item.id, title: item.title, subtitle: item.subtitle)) { [client] in
+    try await client.playback(eab: eab, channelId: channelId)
+}
+```
+
+To use a different checkout of the package, change `packages.WazKit.path` in `project.yml`
+(or swap it for `url: https://github.com/AgentiLoop/WazKit`, `branch: main`) and re-run
+`xcodegen generate`.
+
 ## Layout
 
 | File | Role |
 | --- | --- |
 | `Sources/WazuApp.swift` | App entry point, menus and keyboard shortcuts |
-| `Sources/ContentView.swift` | Sidebar, hubs, rows of artwork, series/episode views, live guide, inline player |
-| `Sources/HuluClient.swift` | The discover / guide / playlist API client and FairPlay key delivery |
-| `Sources/Models.swift` | Codable models for the Hulu API responses |
-| `Sources/Player.swift` | AVPlayer controller and AVKit player view |
-| `Sources/PlayerWindow.swift` | Stand-alone player window (own full screen, Float on Top) |
-| `Sources/SignIn.swift` | hulu.com sign-in web view that captures the session cookies |
-| `project.yml` | xcodegen project definition |
+| `Sources/ContentView.swift` | Sidebar, hubs, rows of artwork, series/episode views, live guide, the TV tab |
+| `Sources/HuluClient.swift` | The discover / guide / playlist API client (a WazKit `StreamingService`) |
+| `Sources/Models.swift` | Models for the Hulu API responses (`Item` is a WazKit `Tile`) |
+| `Sources/SignIn.swift` | hulu.com sign-in (WazKit `WebSignInView`) that copies the session cookies out |
+| `project.yml` | xcodegen project definition, incl. the WazKit dependency |
 
 ## Notes
 

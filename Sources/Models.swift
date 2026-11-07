@@ -8,6 +8,7 @@
 //
 
 import Foundation
+import WazKit
 
 struct Hub {
     let id: String
@@ -62,7 +63,7 @@ struct Collection: Identifiable {
     }
 }
 
-struct Item: Identifiable, Hashable {
+struct Item: Identifiable, Hashable, Tile {
     let id: String
     /// series, movie, episode, sports_episode, hub_link, network, sports_team…
     let kind: String
@@ -182,14 +183,4 @@ struct Program: Hashable {
     let headline: String
     let start: Date
     let end: Date
-}
-
-/// What play.hulu.com answers: the HLS stream and where to get its FairPlay keys.
-struct Playback {
-    let streamURL: URL
-    let licenseURL: URL
-    let certificateURL: URL
-    /// Where to resume, in seconds (0 to start over; live has none).
-    let resume: Double
-    let isLive: Bool
 }
