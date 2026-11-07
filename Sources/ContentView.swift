@@ -71,11 +71,20 @@ final class AppModel: ObservableObject {
     /// What a click on an item does: episodes and airings play; everything else opens its page.
     func open(_ item: Item) {
         let playable = item.isLive || ["episode", "sports_episode", "extra", "live"].contains(item.kind)
-        if let browse = item.browse, !playable || item.eab == nil {
-            path.append(Destination(url: browse, title: item.title))
+        if item.browse != nil, !playable || item.eab == nil {
+            showDetails(item)
         } else {
             player.play(item)
         }
+    }
+
+    /// Opens an item's page; shows and movies open under the TV and Movies places so the sidebar follows.
+    func showDetails(_ item: Item) {
+        guard let browse = item.browse else { return }
+        // Only switch when it changes the place: setting it clears the stack.
+        if item.kind == "series", place != .tv { place = .tv }
+        if item.kind == "movie", place != .movies { place = .movies }
+        path.append(Destination(url: browse, title: item.title))
     }
 
     func signOut() {
@@ -257,7 +266,7 @@ struct ItemCard: View {
         .help(item.description ?? item.title)
         .contextMenu {
             if item.eab != nil { Button("Play") { app.player.play(item) } }
-            if let browse = item.browse { Button("Show Details") { app.path.append(Destination(url: browse, title: item.title)) } }
+            if item.browse != nil { Button("Show Details") { app.showDetails(item) } }
         }
     }
 }
