@@ -146,6 +146,16 @@ struct ContentView: View {
             }
             .id(app.session)
         }
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    app.signOut()
+                } label: {
+                    Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
+                }
+                .help("Sign out of Hulu")
+            }
+        }
         .frame(minWidth: 960, minHeight: 600)
         .sheet(isPresented: $app.showSignIn) {
             SignInView { app.session += 1 }
