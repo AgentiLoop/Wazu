@@ -2,6 +2,8 @@
 
 A personal Mac TV player for a Hulu subscription, in SwiftUI. Not for distribution.
 
+![Wazu main window](docs/screenshot.png)
+
 Like Wazy (Disney+) and StarPlayrX, it talks to the service's own web API and plays natively:
 the same calls hulu.com's player makes (discover.hulu.com for browsing, guide.hulu.com for live
 TV, play.hulu.com for the stream) feed a native UI, and AVPlayer plays the FairPlay HLS stream
