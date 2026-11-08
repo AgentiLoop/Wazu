@@ -344,7 +344,7 @@ struct LiveView: View {
                                               artwork: nil, eab: program.eab, channelId: channel.id))
                             } label: {
                                 HStack(spacing: 12) {
-                                    AsyncImage(url: channel.logo) { image in
+                                    AsyncImage(url: URL(string: (channel.logo?.absoluteString ?? "") + "&size=240x80&format=png")) { image in
                                         image.resizable().aspectRatio(contentMode: .fit)
                                     } placeholder: {
                                         Image(systemName: "tv")
