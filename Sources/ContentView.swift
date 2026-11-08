@@ -344,12 +344,8 @@ struct LiveView: View {
                                               artwork: nil, eab: program.eab, channelId: channel.id))
                             } label: {
                                 HStack(spacing: 12) {
-                                    AsyncImage(url: URL(string: (channel.logo?.absoluteString ?? "") + "&size=240x80&format=png")) { image in
-                                        image.resizable().aspectRatio(contentMode: .fit)
-                                    } placeholder: {
-                                        Image(systemName: "tv")
-                                    }
-                                    .frame(width: 120, height: 40)
+                                    ChannelLogo(url: URL(string: (channel.logo?.absoluteString ?? "") + "&size=240x80%7Cmax&format=png"))
+                                        .frame(width: 120, height: 40)
                                     VStack(alignment: .leading) {
                                         Text(channel.name).font(.headline)
                                         if let program = channel.program {
@@ -375,6 +371,34 @@ struct LiveView: View {
         .navigationTitle("Live TV")
         .task(id: app.session) {
             do { channels = try await app.client.channels() } catch { self.error = error.localizedDescription }
+        }
+    }
+}
+
+/// img.hulu.com answers a not-yet-rendered size with 200 "Submitted for processing"
+/// (which URLCache keeps for 30 days), so drop that response and retry until the PNG is ready.
+struct ChannelLogo: View {
+    let url: URL?
+    @State private var image: NSImage?
+
+    var body: some View {
+        Group {
+            if let image {
+                Image(nsImage: image).resizable().aspectRatio(contentMode: .fit)
+            } else {
+                Image(systemName: "tv")
+            }
+        }
+        .task(id: url) {
+            guard let url else { return }
+            let request = URLRequest(url: url)
+            for _ in 0..<5 {
+                if let (data, _) = try? await URLSession.shared.data(for: request) {
+                    if let loaded = NSImage(data: data) { image = loaded; return }
+                    URLCache.shared.removeCachedResponse(for: request)
+                }
+                try? await Task.sleep(for: .seconds(2))
+            }
         }
     }
 }
