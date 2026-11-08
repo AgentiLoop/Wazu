@@ -247,9 +247,19 @@ struct HubView: View {
                 Button {
                     app.play(focus)
                 } label: {
-                    Label([focus.subtitle, focus.title].compactMap { $0 }.joined(separator: " · "), systemImage: "play.fill")
+                    VStack(alignment: .leading, spacing: 6) {
+                        Artwork(url: focus.artwork(width: 960, height: 540), title: focus.title, tint: .teal)
+                            .frame(width: 480, height: 270)
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                            .overlay {
+                                Image(systemName: "play.circle.fill").font(.system(size: 56))
+                                    .foregroundStyle(.white).shadow(radius: 6)
+                            }
+                        Text([focus.subtitle, focus.title].compactMap { $0 }.joined(separator: " · ")).font(.headline)
+                    }
+                    .contentShape(Rectangle())
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.plain)
                 .disabled(focus.eab == nil)
             }
         }
