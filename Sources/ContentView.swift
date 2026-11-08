@@ -12,7 +12,7 @@ import WazKit
 
 /// Where the sidebar can take you; TV is last: the player.
 enum Place: String, CaseIterable, Identifiable {
-    case home, shows, movies, live, myStuff, search, tv
+    case home, shows, movies, sports, live, myStuff, search, tv
 
     var id: String { rawValue }
 
@@ -21,6 +21,7 @@ enum Place: String, CaseIterable, Identifiable {
         case .home: "Home"
         case .shows: "TV Shows"
         case .movies: "Movies"
+        case .sports: "Sports"
         case .live: "Live TV"
         case .myStuff: "My Stuff"
         case .search: "Search"
@@ -33,6 +34,7 @@ enum Place: String, CaseIterable, Identifiable {
         case .home: "house"
         case .shows: "tv"
         case .movies: "film"
+        case .sports: "sportscourt"
         case .live: "antenna.radiowaves.left.and.right"
         case .myStuff: "plus.square.on.square"
         case .search: "magnifyingglass"
@@ -46,6 +48,7 @@ enum Place: String, CaseIterable, Identifiable {
         case .home: "home"
         case .shows: "tv"
         case .movies: "movies"
+        case .sports: "sports"
         case .myStuff: "watch-later"
         case .live, .search, .tv: nil
         }
