@@ -2,10 +2,8 @@
 //  HuluClient.swift
 //  Wazu
 //
-//  Hulu's web API — the same calls hulu.com's own player makes: discover.hulu.com for browsing,
-//  guide.hulu.com for live TV, play.hulu.com for the stream, and bamgrid.com for FairPlay keys.
-//  Auth is the browser session: the cookies the sign-in API answers with (SignIn.swift), which
-//  live in HTTPCookieStorage.shared.
+//  Hulu's discovery, guide and FairPlay APIs, using native bearer tokens when available
+//  and the browser's cookies for explicit website sign-in.
 //
 
 import Foundation
@@ -34,7 +32,14 @@ actor HuluClient: StreamingService {
     // MARK: Session
 
     nonisolated static var isSignedIn: Bool {
-        HTTPCookieStorage.shared.cookies?.contains { $0.name == "_hulu_session" && $0.domain.hasSuffix("hulu.com") } ?? false
+        HuluSession.stored() != nil || hasWebSession
+    }
+
+    nonisolated static var hasWebSession: Bool {
+        HTTPCookieStorage.shared.cookies?.contains {
+            $0.name == "_hulu_session" && ($0.domain == "hulu.com" || $0.domain.hasSuffix(".hulu.com"))
+                && ($0.expiresDate.map { $0 > Date() } ?? true)
+        } ?? false
     }
 
     nonisolated static func signOut() {
@@ -98,7 +103,8 @@ actor HuluClient: StreamingService {
     // MARK: Playback
 
     func playback(eab: String, channelId: String?) async throws -> Playback {
-        let guid = HTTPCookieStorage.shared.cookies?.first { $0.name == "guid" && $0.domain.hasSuffix("hulu.com") }?.value
+        let guid = HuluSession.stored()?.serial
+            ?? HTTPCookieStorage.shared.cookies?.first { $0.name == "guid" && $0.domain.hasSuffix("hulu.com") }?.value
             ?? UUID().uuidString.replacingOccurrences(of: "-", with: "")
         var body: [String: Any] = [
             "device_identifier": guid, "guid": guid, "deejay_device_id": Self.deejayDeviceId, "version": 1,
@@ -160,6 +166,10 @@ actor HuluClient: StreamingService {
     // MARK: HTTP
 
     private func json(_ method: String, _ url: URL, body: [String: Any]? = nil) async throws -> [String: Any] {
+        guard url.scheme == "https", let host = url.host,
+              ["discover.hulu.com", "guide.hulu.com", "play.hulu.com"].contains(host) else {
+            throw HuluError.badResponse("untrusted API URL")
+        }
         var request = URLRequest(url: url)
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Accept")
@@ -167,8 +177,21 @@ actor HuluClient: StreamingService {
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
             request.httpBody = try JSONSerialization.data(withJSONObject: body)
         }
-        let (data, response) = try await session.data(for: request)
-        let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+        let token = try await HuluSession.shared.token()
+        if let token {
+            request.httpShouldHandleCookies = false
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        var (data, response) = try await session.data(for: request)
+        var status = (response as? HTTPURLResponse)?.statusCode ?? 0
+        if let token, status == 401 {
+            guard let refreshed = try await HuluSession.shared.token(rejected: token) else {
+                throw HuluError.signIn("Your Hulu session ended. Please sign in again.")
+            }
+            request.setValue("Bearer \(refreshed)", forHTTPHeaderField: "Authorization")
+            (data, response) = try await session.data(for: request)
+            status = (response as? HTTPURLResponse)?.statusCode ?? 0
+        }
         guard let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             throw HuluError.http(status, String(decoding: data.prefix(200), as: UTF8.self))
         }
