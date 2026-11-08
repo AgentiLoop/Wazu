@@ -5,7 +5,8 @@ options:
     macOS: "14.0"
 packages:
   WazKit:
-    path: ../WazKit
+    url: https://github.com/AgentiLoop/WazKit.git
+    from: 1.0.0
 targets:
   Wazu:
     type: application
@@ -15,6 +16,8 @@ targets:
     dependencies:
       - package: WazKit
     scheme:
+      testTargets:
+        - WazuTests
       environmentVariables:
         OS_ACTIVITY_MODE: disable
     info:
@@ -36,3 +39,18 @@ targets:
         DEVELOPMENT_TEAM: 469UCUB275
         ENABLE_HARDENED_RUNTIME: NO
         GENERATE_INFOPLIST_FILE: NO
+  WazuTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - Tests
+    dependencies:
+      - target: Wazu
+    settings:
+      base:
+        SWIFT_VERSION: "5.0"
+        GENERATE_INFOPLIST_FILE: YES
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: 469UCUB275
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Wazu.app/Contents/MacOS/Wazu"
+        BUNDLE_LOADER: "$(TEST_HOST)"
