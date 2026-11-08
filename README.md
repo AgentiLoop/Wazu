@@ -1,6 +1,6 @@
 # Wazu
 
-A personal Mac TV player for a Hulu subscription, in SwiftUI. Not for distribution.
+A personal Mac TV player for a Hulu subscription, in SwiftUI.
 
 ![Wazu main window](docs/screenshot.png)
 
