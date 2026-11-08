@@ -119,7 +119,15 @@ final class AppModel: ObservableObject {
         if let target, place != target { place = target }
     }
 
+    @Published var signOutError: String?
+
     func signOut() {
+        do {
+            try HuluSession.shared.clear()
+        } catch {
+            signOutError = error.localizedDescription
+            return
+        }
         player.stop()
         HuluClient.signOut()
         path = []
@@ -159,6 +167,14 @@ struct ContentView: View {
         .frame(minWidth: 960, minHeight: 600)
         .sheet(isPresented: $app.showSignIn) {
             SignInView { app.session += 1 }
+        }
+        .alert("Could Not Sign Out", isPresented: Binding(
+            get: { app.signOutError != nil },
+            set: { if !$0 { app.signOutError = nil } }
+        )) {
+            Button("OK") { app.signOutError = nil }
+        } message: {
+            Text(app.signOutError ?? "")
         }
     }
 
