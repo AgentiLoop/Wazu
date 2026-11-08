@@ -68,13 +68,24 @@ final class AppModel: ObservableObject {
 
     @Published var place: Place = .home { didSet { if place != .tv { path = [] } } }
     @Published var path: [Destination] = []
-    @Published var showSignIn = !HuluClient.isSignedIn
+    @Published var showSignIn = false
     /// Playback > Float on Top: the split-out player window stays above other windows.
     @Published var playerFloats = false { didSet { player.floatsOnTop = playerFloats } }
     /// Bumped on sign-in/out so the views reload.
     @Published var session = 0
+    private var signInObserver: NSObjectProtocol?
 
-    init() { player = PlayerController(service: client) }
+    init() {
+        player = PlayerController(service: client)
+        signInObserver = NotificationCenter.default.addObserver(forName: HuluAuth.signInRequired, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.showSignIn = true }
+        }
+        if !HuluClient.isSignedIn {
+            Task {
+                if await HuluAuth.recover() { session += 1 } else { showSignIn = true }
+            }
+        }
+    }
 
     /// What a click on an item does: episodes and airings play; everything else opens its page.
     func open(_ item: Item) {
@@ -127,6 +138,8 @@ final class AppModel: ObservableObject {
     func signOut() {
         do {
             try HuluSession.shared.clear()
+            try HuluAuth.deleteCredentials()
+            HuluAuth.stopRecovery()
         } catch {
             signOutError = error.localizedDescription
             return
@@ -331,12 +344,12 @@ struct LiveView: View {
                                               artwork: nil, eab: program.eab, channelId: channel.id))
                             } label: {
                                 HStack(spacing: 12) {
-                                    AsyncImage(url: URL(string: (channel.logo?.absoluteString ?? "") + "&size=120x120&format=png")) { image in
+                                    AsyncImage(url: channel.logo) { image in
                                         image.resizable().aspectRatio(contentMode: .fit)
                                     } placeholder: {
                                         Image(systemName: "tv")
                                     }
-                                    .frame(width: 60, height: 40)
+                                    .frame(width: 120, height: 40)
                                     VStack(alignment: .leading) {
                                         Text(channel.name).font(.headline)
                                         if let program = channel.program {

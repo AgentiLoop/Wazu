@@ -55,7 +55,25 @@ actor HuluClient: StreamingService {
     }
 
     func hub(url: URL) async throws -> Hub {
-        Hub(json: try await json("GET", url))
+        var hub = Hub(json: try await json("GET", url))
+        // Hub links (Leagues & Events) come without artwork; the hub they open has a tile.
+        let links = Set(hub.collections.flatMap(\.items).filter { $0.kind == "hub_link" && $0.artwork == nil }.compactMap(\.browse))
+        guard !links.isEmpty else { return hub }
+        var tiles = [URL: URL]()
+        await withTaskGroup(of: (URL, URL?).self) { group in
+            for link in links { group.addTask { (link, await self.tile(of: link)) } }
+            for await (link, tile) in group { tiles[link] = tile }
+        }
+        for c in hub.collections.indices {
+            for i in hub.collections[c].items.indices where hub.collections[c].items[i].artwork == nil {
+                hub.collections[c].items[i].artwork = hub.collections[c].items[i].browse.flatMap { tiles[$0] }
+            }
+        }
+        return hub
+    }
+
+    private func tile(of hub: URL) async -> URL? {
+        try? Hub(json: await json("GET", hub)).artwork
     }
 
     /// A collection page (a season, or the `next` of a collection).
@@ -185,12 +203,18 @@ actor HuluClient: StreamingService {
         var (data, response) = try await session.data(for: request)
         var status = (response as? HTTPURLResponse)?.statusCode ?? 0
         if let token, status == 401 {
-            guard let refreshed = try await HuluSession.shared.token(rejected: token) else {
+            var refreshed = try? await HuluSession.shared.token(rejected: token)
+            if refreshed == nil, await HuluAuth.recover() {
+                refreshed = try? await HuluSession.shared.token()
+            }
+            guard let refreshed else {
+                await HuluAuth.requireSignIn()
                 throw HuluError.signIn("Your Hulu session ended. Please sign in again.")
             }
             request.setValue("Bearer \(refreshed)", forHTTPHeaderField: "Authorization")
             (data, response) = try await session.data(for: request)
             status = (response as? HTTPURLResponse)?.statusCode ?? 0
+            if status == 401 { await HuluAuth.requireSignIn() }
         }
         guard let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             throw HuluError.http(status, String(decoding: data.prefix(200), as: UTF8.self))

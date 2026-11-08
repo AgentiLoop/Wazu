@@ -17,11 +17,15 @@ struct Hub {
     let description: String?
     /// The episode to play from the Play button on a series/movie page (details.vod_items.focus).
     let focus: Item?
+    /// The hub's own tile, used for the links to it (league hubs).
+    let artwork: URL?
     var collections: [Collection]
 
     init(json: [String: Any]) {
         id = json["id"] as? String ?? ""
         name = json["name"] as? String ?? ""
+        artwork = ((json["artwork"] as? [String: Any])?["program.tile"] as? [String: Any])
+            .flatMap { $0["path"] as? String }.flatMap(URL.init(string:))
         let details = json["details"] as? [String: Any]
         description = ((details?["entity"] as? [String: Any])?["description"] as? String)
         let focusEntity = ((details?["vod_items"] as? [String: Any])?["focus"] as? [String: Any])?["entity"] as? [String: Any]
@@ -71,7 +75,7 @@ struct Item: Identifiable, Hashable, Tile {
     let subtitle: String?
     let description: String?
     /// img.hulu.com artwork; `size=WxH&format=jpeg` must be appended to get an image.
-    let artwork: URL?
+    var artwork: URL?
     /// Poster-shaped artwork for vertical rows, when Hulu has one.
     let verticalArtwork: URL?
     /// Playable when present: "EAB::<id>::<asset>::<bundle>" (never the "::NULL::NULL" placeholder).
@@ -145,7 +149,8 @@ struct Item: Identifiable, Hashable, Tile {
 
         let browseAction = actions?["browse"] as? [String: Any] ?? actions?["browse.0"] as? [String: Any]
             ?? json["browse"] as? [String: Any]
-        browse = (browseAction?["href"] as? String)
+        // Hub links (Leagues & Events) carry the hub's URL only at the top level.
+        browse = (browseAction?["href"] as? String ?? (type == "hub_link" ? json["href"] as? String : nil))
             .map { $0.replacingOccurrences(of: "/content/v4/hubs/", with: "/content/v5/hubs/") }
             .flatMap(URL.init(string:))
     }
