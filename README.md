@@ -2,7 +2,7 @@
 
 A personal Mac TV player for a Hulu subscription, in SwiftUI. Not for distribution.
 
-Like Waze (Disney+) and StarPlayrX, it talks to the service's own web API and plays natively:
+Like Wazy (Disney+) and StarPlayrX, it talks to the service's own web API and plays natively:
 the same calls hulu.com's player makes (discover.hulu.com for browsing, guide.hulu.com for live
 TV, play.hulu.com for the stream) feed a native UI, and AVPlayer plays the FairPlay HLS stream
 with keys from Hulu's license server (AVContentKeySession). Sign-in happens once on hulu.com
@@ -38,7 +38,7 @@ itself keeps in the browser.
 - Xcode 15 or later
 - [xcodegen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`) — the Xcode
   project is generated from `project.yml`
-- [WazKit](https://github.com/AgentiLoop/WazKit), the Swift package shared with Waze, cloned
+- [WazKit](https://github.com/AgentiLoop/WazKit), the Swift package shared with Wazy, cloned
   next to this folder (`project.yml` points at `../WazKit`)
 
 ## Build
