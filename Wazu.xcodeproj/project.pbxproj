@@ -14,6 +14,7 @@
 		F1BBB934D90E0787465AD7D2 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2491973EABAE889593628F3A /* Models.swift */; };
 		F3909391B0110BF4EC7265BF /* SignIn.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30931CFBD1F6D0BA61E82DC1 /* SignIn.swift */; };
 		F4ADD49EFEA7317B569FC798 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84C2A5C05915EC98647BAAA6 /* ContentView.swift */; };
+		F98FDD7B25C5F37D911D8C1E /* HuluSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E9E208A79EC9CEB4016BD8B /* HuluSession.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -35,6 +36,7 @@
 		30931CFBD1F6D0BA61E82DC1 /* SignIn.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignIn.swift; sourceTree = "<group>"; };
 		3FB3645DAB8DC035BC74EC5F /* Wazu.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Wazu.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		62B285BF6878E442EBE3B8ED /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		7E9E208A79EC9CEB4016BD8B /* HuluSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HuluSession.swift; sourceTree = "<group>"; };
 		84C2A5C05915EC98647BAAA6 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -72,6 +74,7 @@
 				62B285BF6878E442EBE3B8ED /* Assets.xcassets */,
 				84C2A5C05915EC98647BAAA6 /* ContentView.swift */,
 				099C2F5A3339CE49E82C51CD /* HuluClient.swift */,
+				7E9E208A79EC9CEB4016BD8B /* HuluSession.swift */,
 				078A4FAC0BFE35186418E656 /* Info.plist */,
 				2491973EABAE889593628F3A /* Models.swift */,
 				30931CFBD1F6D0BA61E82DC1 /* SignIn.swift */,
@@ -197,6 +200,7 @@
 			files = (
 				F4ADD49EFEA7317B569FC798 /* ContentView.swift in Sources */,
 				3CF27BDCE41436E1D070B0C6 /* HuluClient.swift in Sources */,
+				F98FDD7B25C5F37D911D8C1E /* HuluSession.swift in Sources */,
 				F1BBB934D90E0787465AD7D2 /* Models.swift in Sources */,
 				F3909391B0110BF4EC7265BF /* SignIn.swift in Sources */,
 				0C603BB087E4FA6FFF42B2AC /* WazuApp.swift in Sources */,
