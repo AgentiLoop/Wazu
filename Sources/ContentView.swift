@@ -362,7 +362,6 @@ struct LiveSearchField: View {
     var body: some View {
         TextField("Search channels and shows", text: $search.text)
             .textFieldStyle(.roundedBorder)
-            .padding(.trailing, search.text.isEmpty ? 0 : 22)
             .overlay(alignment: .trailing) {
                 if !search.text.isEmpty {
                     Button {
