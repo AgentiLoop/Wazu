@@ -337,6 +337,15 @@ struct LiveView: View {
     @EnvironmentObject var app: AppModel
     @State private var channels: [Channel] = []
     @State private var error: String?
+    @State private var query = ""
+
+    private var filtered: [Channel] {
+        let query = query.trimmingCharacters(in: .whitespaces)
+        guard !query.isEmpty else { return channels }
+        return channels.filter {
+            $0.name.localizedCaseInsensitiveContains(query) || ($0.program?.headline.localizedCaseInsensitiveContains(query) ?? false)
+        }
+    }
 
     var body: some View {
         Group {
@@ -344,10 +353,12 @@ struct LiveView: View {
                 ContentUnavailableView(error, systemImage: "exclamationmark.triangle")
             } else if channels.isEmpty {
                 Color.clear
+            } else if filtered.isEmpty {
+                ContentUnavailableView.search(text: query)
             } else {
                 ScrollView {
                     LazyVStack(spacing: 0) {
-                        ForEach(channels) { channel in
+                        ForEach(filtered) { channel in
                             Button {
                                 guard let program = channel.program else { return }
                                 app.play(Item(id: channel.id, kind: "live", title: program.headline, subtitle: channel.name,
@@ -379,6 +390,7 @@ struct LiveView: View {
             }
         }
         .navigationTitle("Live TV")
+        .searchable(text: $query, prompt: "Search channels and shows")
         .task(id: app.session) {
             do { channels = try await app.client.channels() } catch { self.error = error.localizedDescription }
         }
