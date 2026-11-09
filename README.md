@@ -2,6 +2,8 @@
 
 A personal Mac TV player for a Hulu subscription, in SwiftUI.
 
+**Website:** [wazu.xcf.ai](https://wazu.xcf.ai) · **Download:** [latest release](https://github.com/AgentiLoop/Wazu/releases/latest) · **Sibling app:** [Wazy](https://github.com/AgentiLoop/Wazy) ([wazy.xcf.ai](https://wazy.xcf.ai))
+
 ![Wazu main window](docs/screenshot.png)
 
 Like Wazy (Disney+) and StarPlayrX, it talks to the service's own web API and plays natively:
