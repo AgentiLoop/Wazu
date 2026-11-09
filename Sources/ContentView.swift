@@ -180,6 +180,9 @@ struct ContentView: View {
                         .frame(width: 220)
                 }
             }
+            if #available(macOS 26.0, *) {
+                ToolbarSpacer(.fixed, placement: .primaryAction)
+            }
             ToolbarItem(placement: .primaryAction) {
                 Button {
                     app.signOut()
