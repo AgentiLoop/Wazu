@@ -173,15 +173,24 @@ struct ContentView: View {
             .id(app.session)
         }
         .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                if app.place == .live, app.path.isEmpty {
-                    TextField("Search channels and shows", text: $app.liveQuery)
-                        .textFieldStyle(.roundedBorder)
-                        .frame(width: 220)
-                }
-            }
             if #available(macOS 26.0, *) {
+                ToolbarItem(placement: .primaryAction) {
+                    if app.place == .live, app.path.isEmpty {
+                        TextField("Search channels and shows", text: $app.liveQuery)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: 220)
+                    }
+                }
+                .sharedBackgroundVisibility(.hidden)
                 ToolbarSpacer(.fixed, placement: .primaryAction)
+            } else {
+                ToolbarItem(placement: .primaryAction) {
+                    if app.place == .live, app.path.isEmpty {
+                        TextField("Search channels and shows", text: $app.liveQuery)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: 220)
+                    }
+                }
             }
             ToolbarItem(placement: .primaryAction) {
                 Button {
