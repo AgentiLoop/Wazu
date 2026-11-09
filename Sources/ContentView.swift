@@ -66,12 +66,14 @@ final class AppModel: ObservableObject {
     let client = HuluClient()
     let player: PlayerController
 
-    @Published var place: Place = .home { didSet { if place != .tv { path = [] } } }
+    @Published var place: Place = .home { didSet { if place != .tv { path = [] }; if place != oldValue { liveSearch.text = "" } } }
     @Published var path: [Destination] = []
     @Published var showSignIn = false
     /// Live TV's search text; the field lives in the window toolbar, left of Sign Out. Kept in its own
     /// object so typing does not re-render the window (and the toolbar), which would drop the field's focus.
     let liveSearch = LiveSearch()
+    /// The search field shows on Live TV and on every hub page (Home, TV Shows, Movies, Sports, My Stuff).
+    var searchVisible: Bool { place == .live || place.hub != nil }
     /// Playback > Float on Top: the split-out player window stays above other windows.
     @Published var playerFloats = false { didSet { player.floatsOnTop = playerFloats } }
     /// Bumped on sign-in/out so the views reload.
@@ -176,7 +178,7 @@ struct ContentView: View {
         .toolbar {
             if #available(macOS 26.0, *) {
                 ToolbarItem(placement: .primaryAction) {
-                    if app.place == .live, app.path.isEmpty {
+                    if app.searchVisible, app.path.isEmpty {
                         LiveSearchField(search: app.liveSearch)
                     }
                 }
@@ -184,7 +186,7 @@ struct ContentView: View {
                 ToolbarSpacer(.fixed, placement: .primaryAction)
             } else {
                 ToolbarItem(placement: .primaryAction) {
-                    if app.place == .live, app.path.isEmpty {
+                    if app.searchVisible, app.path.isEmpty {
                         LiveSearchField(search: app.liveSearch)
                     }
                 }
@@ -218,7 +220,7 @@ struct ContentView: View {
         case .search: SearchView()
         case .tv: PlayerView(player: app.player, inWindow: false, title: "Wazu")
         default: HubView(url: URL(string: "https://discover.hulu.com/content/v5/hubs/\(app.place.hub!)?schema=1&limit=30")!,
-                         title: app.place.title)
+                         title: app.place.title, searchable: true, search: app.liveSearch)
         }
     }
 }
@@ -229,8 +231,13 @@ struct HubView: View {
     @EnvironmentObject var app: AppModel
     let url: URL
     let title: String
+    /// Shows the toolbar search: filters the hub's tiles by title or subtitle.
+    var searchable = false
+    @ObservedObject var search = LiveSearch()
     @State private var hub: Hub?
     @State private var error: String?
+
+    private var filter: String { searchable ? search.text.trimmingCharacters(in: .whitespaces) : "" }
 
     var body: some View {
         Group {
@@ -241,7 +248,7 @@ struct HubView: View {
                             header(hub)
                         }
                         ForEach(hub.collections) { collection in
-                            CollectionRow(collection: collection)
+                            CollectionRow(collection: collection, filter: filter)
                         }
                     }
                     .padding(.vertical, 20)
@@ -294,16 +301,31 @@ struct HubView: View {
 struct CollectionRow: View {
     @EnvironmentObject var app: AppModel
     @State var collection: Collection
+    /// Only tiles whose title or subtitle contains this text are shown (empty shows all).
+    var filter = ""
     @State private var loadingMore = false
 
     private var vertical: Bool { collection.theme.contains("vertical") }
 
+    private var visibleItems: [Item] {
+        guard !filter.isEmpty else { return collection.items }
+        return collection.items.filter {
+            $0.title.localizedCaseInsensitiveContains(filter) || ($0.subtitle?.localizedCaseInsensitiveContains(filter) ?? false)
+        }
+    }
+
     var body: some View {
+        if filter.isEmpty || !visibleItems.isEmpty {
+            row
+        }
+    }
+
+    private var row: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(collection.name).font(.title3.bold()).padding(.horizontal, 20)
             ScrollView(.horizontal) {
                 LazyHStack(alignment: .top, spacing: 12) {
-                    ForEach(collection.items) { item in
+                    ForEach(visibleItems) { item in
                         ItemCard(item: item, vertical: vertical)
                     }
                     if collection.next != nil {
