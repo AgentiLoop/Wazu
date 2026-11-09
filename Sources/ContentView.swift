@@ -69,6 +69,8 @@ final class AppModel: ObservableObject {
     @Published var place: Place = .home { didSet { if place != .tv { path = [] } } }
     @Published var path: [Destination] = []
     @Published var showSignIn = false
+    /// Live TV's search text; the field lives in the window toolbar, left of Sign Out.
+    @Published var liveQuery = ""
     /// Playback > Float on Top: the split-out player window stays above other windows.
     @Published var playerFloats = false { didSet { player.floatsOnTop = playerFloats } }
     /// Bumped on sign-in/out so the views reload.
@@ -171,6 +173,13 @@ struct ContentView: View {
             .id(app.session)
         }
         .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                if app.place == .live, app.path.isEmpty {
+                    TextField("Search channels and shows", text: $app.liveQuery)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(width: 220)
+                }
+            }
             ToolbarItem(placement: .primaryAction) {
                 Button {
                     app.signOut()
@@ -337,7 +346,8 @@ struct LiveView: View {
     @EnvironmentObject var app: AppModel
     @State private var channels: [Channel] = []
     @State private var error: String?
-    @State private var query = ""
+
+    private var query: String { app.liveQuery }
 
     private var filtered: [Channel] {
         let query = query.trimmingCharacters(in: .whitespaces)
@@ -390,7 +400,6 @@ struct LiveView: View {
             }
         }
         .navigationTitle("Live TV")
-        .searchable(text: $query, prompt: "Search channels and shows")
         .task(id: app.session) {
             do { channels = try await app.client.channels() } catch { self.error = error.localizedDescription }
         }
