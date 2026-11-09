@@ -69,8 +69,9 @@ final class AppModel: ObservableObject {
     @Published var place: Place = .home { didSet { if place != .tv { path = [] } } }
     @Published var path: [Destination] = []
     @Published var showSignIn = false
-    /// Live TV's search text; the field lives in the window toolbar, left of Sign Out.
-    @Published var liveQuery = ""
+    /// Live TV's search text; the field lives in the window toolbar, left of Sign Out. Kept in its own
+    /// object so typing does not re-render the window (and the toolbar), which would drop the field's focus.
+    let liveSearch = LiveSearch()
     /// Playback > Float on Top: the split-out player window stays above other windows.
     @Published var playerFloats = false { didSet { player.floatsOnTop = playerFloats } }
     /// Bumped on sign-in/out so the views reload.
@@ -176,9 +177,7 @@ struct ContentView: View {
             if #available(macOS 26.0, *) {
                 ToolbarItem(placement: .primaryAction) {
                     if app.place == .live, app.path.isEmpty {
-                        TextField("Search channels and shows", text: $app.liveQuery)
-                            .textFieldStyle(.roundedBorder)
-                            .frame(width: 220)
+                        LiveSearchField(search: app.liveSearch)
                     }
                 }
                 .sharedBackgroundVisibility(.hidden)
@@ -186,9 +185,7 @@ struct ContentView: View {
             } else {
                 ToolbarItem(placement: .primaryAction) {
                     if app.place == .live, app.path.isEmpty {
-                        TextField("Search channels and shows", text: $app.liveQuery)
-                            .textFieldStyle(.roundedBorder)
-                            .frame(width: 220)
+                        LiveSearchField(search: app.liveSearch)
                     }
                 }
             }
@@ -217,7 +214,7 @@ struct ContentView: View {
 
     @ViewBuilder private var root: some View {
         switch app.place {
-        case .live: LiveView()
+        case .live: LiveView(search: app.liveSearch)
         case .search: SearchView()
         case .tv: PlayerView(player: app.player, inWindow: false, title: "Wazu")
         default: HubView(url: URL(string: "https://discover.hulu.com/content/v5/hubs/\(app.place.hub!)?schema=1&limit=30")!,
@@ -354,12 +351,41 @@ struct ItemCard: View {
 
 // MARK: - Live
 
+final class LiveSearch: ObservableObject {
+    @Published var text = ""
+}
+
+/// The toolbar's Live TV search field, with a clear (X) button while it has text.
+struct LiveSearchField: View {
+    @ObservedObject var search: LiveSearch
+
+    var body: some View {
+        TextField("Search channels and shows", text: $search.text)
+            .textFieldStyle(.roundedBorder)
+            .padding(.trailing, search.text.isEmpty ? 0 : 22)
+            .overlay(alignment: .trailing) {
+                if !search.text.isEmpty {
+                    Button {
+                        search.text = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.trailing, 6)
+                    .help("Clear search")
+                }
+            }
+            .frame(width: 220)
+    }
+}
+
 struct LiveView: View {
     @EnvironmentObject var app: AppModel
+    @ObservedObject var search: LiveSearch
     @State private var channels: [Channel] = []
     @State private var error: String?
 
-    private var query: String { app.liveQuery }
+    private var query: String { search.text }
 
     private var filtered: [Channel] {
         let query = query.trimmingCharacters(in: .whitespaces)
