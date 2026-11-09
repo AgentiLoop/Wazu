@@ -307,12 +307,9 @@ struct CollectionRow: View {
                         ItemCard(item: item, vertical: vertical)
                     }
                     if collection.next != nil {
-                        Button {
-                            Task { await loadMore() }
-                        } label: {
-                            Label("More", systemImage: "ellipsis")
-                        }
-                        .frame(width: 120, height: vertical ? 240 : 135)
+                        ProgressView()
+                            .frame(width: 120, height: vertical ? 240 : 135)
+                            .task(id: collection.items.count) { await loadMore() }
                     }
                 }
                 .padding(.horizontal, 20)
