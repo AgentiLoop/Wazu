@@ -14,6 +14,10 @@ import Security
 final class HuluAuth: CredentialSignIn {
     let name = "Hulu"
     private var pending: HuluTokens?
+    /// The two-step login waiting for its emailed code.
+    private var twofaToken: String?
+    /// Signed in with the code: the session is the website's cookie, and Hulu's site keeps the profile.
+    private var signedInOnWeb = false
     private var credentials: Credentials?
     private let automatic: Bool
     private static var attemptedRecovery = false
@@ -102,7 +106,19 @@ final class HuluAuth: CredentialSignIn {
         pending = nil
         credentials = nil
         if !automatic { Self.stopRecovery() }
-        let tokens = try await HuluSession.shared.login(email: email, password: password)
+        let tokens: HuluTokens
+        do {
+            tokens = try await HuluSession.shared.login(email: email, password: password)
+        } catch let twofa as HuluTwoFactor {
+            // The automatic sign-in must not email a code on every launch.
+            guard !automatic, !twofa.token.isEmpty else {
+                throw HuluError.signIn("Hulu wants an emailed code. Sign in again, or use Sign In with Hulu Website below.")
+            }
+            HuluClient.signOut() // A fresh cookie jar for the web session the code creates.
+            try await HuluSession.shared.sendCode(token: twofa.token)
+            twofaToken = twofa.token
+            throw SignInCodeSent(email: email)
+        }
         let result = try await HuluSession.shared.profiles(tokens: tokens)
         let pinEnabled = result["pin_enabled"] as? Bool ?? false
         let profiles = (result["profiles"] as? [[String: Any]] ?? []).compactMap { json -> SignInProfile? in
@@ -116,7 +132,22 @@ final class HuluAuth: CredentialSignIn {
         return profiles
     }
 
+    /// The emailed code → a website session; the form then "picks" the one entry and is done.
+    func verify(email: String, code: String) async throws -> [SignInProfile] {
+        guard let twofaToken else { throw HuluError.signIn("Please sign in again.") }
+        try await HuluSession.shared.verifyCode(code, token: twofaToken)
+        self.twofaToken = nil
+        signedInOnWeb = true
+        return [SignInProfile(id: "web", name: email)]
+    }
+
     func pick(_ profile: SignInProfile, pin: String?) async throws {
+        if signedInOnWeb {
+            // The web cookie is the session; a stale native session would take precedence over it.
+            try HuluSession.shared.clear()
+            if !automatic { Self.attemptedRecovery = false }
+            return
+        }
         guard let pending else { throw HuluError.signIn("Please sign in again.") }
         let selected = try await HuluSession.shared.select(profileID: profile.id, pin: pin, tokens: pending)
         try Task.checkCancellation()

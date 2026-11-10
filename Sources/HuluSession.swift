@@ -31,6 +31,11 @@ struct HuluTokens: Codable, Equatable {
     }
 }
 
+/// The password was right, but Hulu wants an emailed code too; `token` names this login attempt.
+struct HuluTwoFactor: Error {
+    let token: String
+}
+
 @MainActor
 final class HuluSession {
     static let shared = HuluSession()
@@ -117,10 +122,60 @@ final class HuluSession {
             "user_email": email, "password": password, "friendly_name": "Wazu",
             "serial_number": serial, "device_id": "166",
         ])
-        if (answer["data"] as? [String: Any])?["twofa_authentication"] as? Bool == true {
-            throw HuluError.signIn("Hulu requires additional verification. Use Sign In with Hulu Website below.")
+        let data = answer["data"] as? [String: Any]
+        if data?["twofa_authentication"] as? Bool == true {
+            throw HuluTwoFactor(token: data?["token"] as? String ?? "")
         }
         return try HuluTokens(json: answer, serial: serial)
+    }
+
+    // MARK: Emailed code (two-step verification)
+
+    /// Cookies go to the shared store, where the website sign-in keeps its `_hulu_session` too.
+    private let web: URLSession = {
+        let config = URLSessionConfiguration.default
+        config.httpCookieStorage = .shared
+        config.httpAdditionalHeaders = ["User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"]
+        return URLSession(configuration: config)
+    }()
+
+    /// Has Hulu email the code for a two-step login, as auth.hulu.com's own login page does.
+    func sendCode(token: String) async throws {
+        _ = try await webPost("/v1/web/mfa/code", form: ["token": token])
+    }
+
+    /// The emailed code → a web session (the `_hulu_session` cookie), like signing in on the website.
+    func verifyCode(_ code: String, token: String) async throws {
+        _ = try await webPost("/v1/web/mfa/authenticate", form: ["token": token, "code": code])
+        guard HuluClient.hasWebSession else { throw HuluError.signIn("The code is incorrect or has expired.") }
+    }
+
+    /// auth.hulu.com's web calls want a CSRF value for the path, from /v2/csrf, in the form.
+    private func webPost(_ path: String, form: [String: String]) async throws -> [String: Any] {
+        var csrfURL = URLComponents(string: "https://auth.hulu.com/v2/csrf")!
+        csrfURL.queryItems = [.init(name: "path", value: path)]
+        var csrfRequest = URLRequest(url: csrfURL.url!)
+        csrfRequest.setValue("application/json", forHTTPHeaderField: "Accept")
+        let (csrfData, _) = try await web.data(for: csrfRequest)
+        guard let csrf = ((try? JSONSerialization.jsonObject(with: csrfData) as? [String: Any])?["data"] as? [String: Any])?["csrf"] as? String else {
+            throw HuluError.badResponse("csrf")
+        }
+        var request = URLRequest(url: URL(string: "https://auth.hulu.com" + path)!)
+        request.httpMethod = "POST"
+        request.setValue("application/x-www-form-urlencoded; charset=utf-8", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        var form = form
+        form["csrf"] = csrf
+        request.httpBody = Self.formBody(form)
+        let (data, response) = try await web.data(for: request)
+        let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+        let object = (try? JSONSerialization.jsonObject(with: data) as? [String: Any]) ?? [:]
+        guard (200..<300).contains(status), object["error"] == nil else {
+            let error = object["error"] as? [String: Any]
+            if error?["name"] as? String == "TOKEN_EXPIRED" { throw HuluError.signIn("The code request expired. Sign in again.") }
+            throw HuluError.signIn(error?["message"] as? String ?? "Hulu refused the code (\(status)).")
+        }
+        return object
     }
 
     func profiles(tokens: HuluTokens) async throws -> [String: Any] {
