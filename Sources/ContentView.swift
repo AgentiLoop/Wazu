@@ -402,33 +402,6 @@ struct ItemCard: View {
 
 // MARK: - Live
 
-final class LiveSearch: ObservableObject {
-    @Published var text = ""
-}
-
-/// The toolbar's Live TV search field, with a clear (X) button while it has text.
-struct LiveSearchField: View {
-    @ObservedObject var search: LiveSearch
-
-    var body: some View {
-        TextField("Search channels and shows", text: $search.text)
-            .textFieldStyle(.roundedBorder)
-            .overlay(alignment: .trailing) {
-                if !search.text.isEmpty {
-                    Button {
-                        search.text = ""
-                    } label: {
-                        Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.trailing, 6)
-                    .help("Clear search")
-                }
-            }
-            .frame(width: 220)
-    }
-}
-
 struct LiveView: View {
     @EnvironmentObject var app: AppModel
     @ObservedObject var search: LiveSearch
@@ -555,55 +528,3 @@ struct SearchView: View {
         searching = false
     }
 }
-
-
-// MARK: - Player
-
-#if os(macOS)
-/// IPTVee's AVPlayerView wrapper, singleton removed: the AVPlayer is passed in
-/// (WazKit's PlayerController owns it) instead of grabbed from a shared PlayerViewObservable.
-/// Fullscreen and picture-in-picture come from AVKit's floating controls.
-struct PlayerContainer: NSViewRepresentable {
-
-    let player: AVPlayer
-
-    func makeNSView(context: Context) -> AVPlayerView {
-        let view = AVPlayerView()
-        view.player = player
-        view.layer?.backgroundColor = .clear
-        view.controlsStyle = .floating
-        view.showsFullScreenToggleButton = true
-        view.allowsPictureInPicturePlayback = true
-        return view
-    }
-
-    func updateNSView(_ nsView: AVPlayerView, context: Context) {}
-}
-
-/// The `Window` scene's NSWindow is not full-screen capable by default, which leaves
-/// View > Enter Full Screen (and AVPlayerView's fullscreen button) disabled.
-struct FullScreenCapable: NSViewRepresentable {
-    func makeNSView(context: Context) -> NSView {
-        let view = NSView()
-        DispatchQueue.main.async {
-            view.window?.collectionBehavior.insert(.fullScreenPrimary)
-            view.window?.collectionBehavior.remove(.fullScreenAuxiliary)
-            view.window?.collectionBehavior.remove(.fullScreenNone)
-        }
-        return view
-    }
-
-    func updateNSView(_ nsView: NSView, context: Context) {}
-}
-
-extension View {
-    /// In full screen the title bar and toolbar stay hidden until the pointer reaches the top edge (macOS 15+).
-    @ViewBuilder func hidesToolbarInFullScreen() -> some View {
-        if #available(macOS 15.0, *) {
-            windowToolbarFullScreenVisibility(.onHover)
-        } else {
-            self
-        }
-    }
-}
-#endif
