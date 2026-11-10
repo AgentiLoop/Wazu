@@ -60,6 +60,8 @@ enum Place: String, CaseIterable, Identifiable {
 struct Destination: Hashable {
     let url: URL
     let title: String
+    /// A hub opened from the iPhone's Browse list: it gets the search field.
+    var searchable = false
 }
 
 @MainActor
@@ -103,14 +105,22 @@ final class AppModel: ObservableObject {
         }
     }
 
-    /// Starts playback and shows it on the TV tab (or in the split-out window, if that is open).
+    /// The iPhone's full-screen player is up.
+    @Published var showPlayer = false
+
+    /// Starts playback and shows it on the TV tab (or in the split-out window, if that is open);
+    /// on iPhone, in the full-screen player.
     func play(_ item: Item) {
         guard let eab = item.eab else { return }
         let channelId = item.isLive ? item.channelId : nil
         player.play(NowPlaying(id: item.id, title: item.title, subtitle: item.subtitle)) { [client] in
             try await client.playback(eab: eab, channelId: channelId)
         }
+        #if os(macOS)
         place = .tv
+        #else
+        showPlayer = true
+        #endif
     }
 
     /// Opens an item's page; shows and movies open under the TV Shows and Movies places so the sidebar follows.
@@ -158,6 +168,7 @@ final class AppModel: ObservableObject {
     }
 }
 
+#if os(macOS)
 struct ContentView: View {
     @EnvironmentObject var app: AppModel
 
@@ -239,6 +250,7 @@ struct ContentView: View {
         }
     }
 }
+#endif
 
 // MARK: - Hubs
 
@@ -289,7 +301,12 @@ struct HubView: View {
                 } label: {
                     VStack(alignment: .leading, spacing: 6) {
                         Artwork(url: focus.artwork(width: 960, height: 540), title: focus.title, tint: .teal)
+                            #if os(macOS)
                             .frame(width: 480, height: 270)
+                            #else
+                            .frame(maxWidth: 480)
+                            .aspectRatio(16 / 9, contentMode: .fit)
+                            #endif
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                             .overlay {
                                 Image(systemName: "play.circle.fill").font(.system(size: 56))
@@ -481,12 +498,12 @@ struct LiveView: View {
 /// (which URLCache keeps for 30 days), so drop that response and retry until the PNG is ready.
 struct ChannelLogo: View {
     let url: URL?
-    @State private var image: NSImage?
+    @State private var image: PlatformImage?
 
     var body: some View {
         Group {
             if let image {
-                Image(nsImage: image).resizable().aspectRatio(contentMode: .fit)
+                Image(platformImage: image).resizable().aspectRatio(contentMode: .fit)
             } else {
                 Image(systemName: "tv")
             }
@@ -496,7 +513,7 @@ struct ChannelLogo: View {
             let request = URLRequest(url: url)
             for _ in 0..<5 {
                 if let (data, _) = try? await URLSession.shared.data(for: request) {
-                    if let loaded = NSImage(data: data) { image = loaded; return }
+                    if let loaded = PlatformImage(data: data) { image = loaded; return }
                     URLCache.shared.removeCachedResponse(for: request)
                 }
                 try? await Task.sleep(for: .seconds(2))
@@ -542,6 +559,7 @@ struct SearchView: View {
 
 // MARK: - Player
 
+#if os(macOS)
 /// IPTVee's AVPlayerView wrapper, singleton removed: the AVPlayer is passed in
 /// (WazKit's PlayerController owns it) instead of grabbed from a shared PlayerViewObservable.
 /// Fullscreen and picture-in-picture come from AVKit's floating controls.
@@ -588,3 +606,4 @@ extension View {
         }
     }
 }
+#endif

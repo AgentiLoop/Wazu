@@ -3,6 +3,7 @@ options:
   bundleIdPrefix: com.starplayrx
   deploymentTarget:
     macOS: "14.0"
+    iOS: "17.0"
 packages:
   WazKit:
     url: https://github.com/AgentiLoop/WazKit.git
@@ -38,6 +39,40 @@ targets:
         CODE_SIGN_IDENTITY: "Apple Development"
         DEVELOPMENT_TEAM: 469UCUB275
         ENABLE_HARDENED_RUNTIME: NO
+        GENERATE_INFOPLIST_FILE: NO
+  WazuiOS:
+    type: application
+    platform: iOS
+    scheme: {}
+    sources:
+      - iOS
+      - Sources/ContentView.swift
+      - Sources/Models.swift
+      - Sources/HuluClient.swift
+      - Sources/HuluSession.swift
+      - Sources/SignIn.swift
+    dependencies:
+      - package: WazKit
+    info:
+      path: iOS/Info.plist
+      properties:
+        CFBundleDisplayName: Wazu
+        CFBundleShortVersionString: "1.0.4"
+        CFBundleVersion: "5"
+        LSApplicationCategoryType: public.app-category.entertainment
+        UIBackgroundModes: [audio]
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
+        ITSAppUsesNonExemptEncryption: false
+    settings:
+      base:
+        PRODUCT_NAME: Wazu
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        PRODUCT_BUNDLE_IDENTIFIER: com.starplayrx.wazu.ios
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SWIFT_VERSION: "5.0"
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: 469UCUB275
         GENERATE_INFOPLIST_FILE: NO
   WazuTests:
     type: bundle.unit-test
