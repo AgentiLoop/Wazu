@@ -300,18 +300,23 @@ struct HubView: View {
                     app.play(focus)
                 } label: {
                     VStack(alignment: .leading, spacing: 6) {
-                        Artwork(url: focus.artwork(width: 960, height: 540), title: focus.title, tint: .teal)
+                        Group {
                             #if os(macOS)
-                            .frame(width: 480, height: 270)
+                            Artwork(url: focus.artwork(width: 960, height: 540), title: focus.title, tint: .teal)
+                                .frame(width: 480, height: 270)
                             #else
-                            .frame(maxWidth: 480)
-                            .aspectRatio(16 / 9, contentMode: .fit)
+                            // A 16:9 box the artwork fills: the image alone would grow to any height offered (landscape).
+                            Color.clear
+                                .aspectRatio(16 / 9, contentMode: .fit)
+                                .frame(maxWidth: 480)
+                                .overlay { Artwork(url: focus.artwork(width: 960, height: 540), title: focus.title, tint: .teal) }
                             #endif
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
-                            .overlay {
-                                Image(systemName: "play.circle.fill").font(.system(size: 56))
-                                    .foregroundStyle(.white).shadow(radius: 6)
-                            }
+                        }
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .overlay {
+                            Image(systemName: "play.circle.fill").font(.system(size: 56))
+                                .foregroundStyle(.white).shadow(radius: 6)
+                        }
                         Text([focus.subtitle, focus.title].compactMap { $0 }.joined(separator: " · ")).font(.headline)
                     }
                     .contentShape(Rectangle())
