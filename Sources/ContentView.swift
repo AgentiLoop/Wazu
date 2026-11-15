@@ -106,6 +106,7 @@ final class AppModel: ObservableObject {
             MainActor.assumeIsolated { self?.showSignIn = true }
         }
         player.onEnd = { [weak self] in self?.playNext(atEnd: true) }
+        player.onClose = { [weak self] in self?.closePlayer() }
         // Once a second of playback: how far in the remembered episode or movie is, and whether its end
         // credits have started (then the next episode plays).
         timeObserver = player.player.addPeriodicTimeObserver(forInterval: CMTime(seconds: 1, preferredTimescale: 1), queue: .main) { [weak self] time in
@@ -160,9 +161,10 @@ final class AppModel: ObservableObject {
     private var currentWatch: AnyCancellable?
 
     /// Starts playback and shows it on the TV tab (or in the split-out window, if that is open);
-    /// on iPhone, in the full-screen player.
-    func play(_ item: Item) {
+    /// on iPhone, in the full-screen player. `guideChannel`: the channel, when it was picked in the TV guide.
+    func play(_ item: Item, guideChannel: String? = nil) {
         guard let eab = item.eab else { return }
+        self.guideChannel = guideChannel
         play(NowPlaying(id: item.id, title: item.title, subtitle: item.subtitle), eab: eab,
              channelId: item.isLive ? item.channelId : nil, show: true)
     }
@@ -170,7 +172,26 @@ final class AppModel: ObservableObject {
     /// Carries on with the last episode or movie from where it was left.
     func resume() {
         guard let last else { return }
+        guideChannel = nil
         play(NowPlaying(id: last.id, title: last.title, subtitle: last.subtitle), eab: last.eab, channelId: nil, show: true)
+    }
+
+    /// The channel last played from the TV guide: the guide highlights it and opens scrolled to it.
+    @Published private(set) var guideChannel: String?
+
+    /// The player's ✕. A live channel picked in the TV guide is paused and the app is back on the guide, which
+    /// opens at that channel and keeps it highlighted. Anything else stops.
+    private func closePlayer() {
+        guard guideChannel != nil, player.current != nil else { player.stop(); return }
+        player.pause()
+        #if os(macOS)
+        if place == .tv, let origin {
+            place = origin.place
+            path = origin.path
+        }
+        #else
+        showPlayer = false
+        #endif
     }
 
     /// An episode or movie becomes the remembered one; played again, it carries on from where it was left.
@@ -553,7 +574,7 @@ struct LiveView: View {
             .frame(maxWidth: 240)
             .padding(.vertical, 10)
             if showsGuide {
-                GuideView(search: search, tint: .teal) { start, end in
+                GuideView(search: search, tint: .teal, playing: app.guideChannel) { start, end in
                     try await app.client.channels(from: start, to: end).map { channel in
                         // An airing's EAB is its own (it ends in the airing's id), so it names the programme.
                         GuideChannel(id: channel.id, name: channel.name, logo: channel.logoImage, programs: channel.programs.map {
@@ -562,7 +583,7 @@ struct LiveView: View {
                     }
                 } onSelect: { channel, program in
                     app.play(Item(id: channel.id, kind: "live", title: program.title, subtitle: channel.name,
-                                  artwork: nil, eab: program.id, channelId: channel.id))
+                                  artwork: nil, eab: program.id, channelId: channel.id), guideChannel: channel.id)
                 }
                 .id(app.session)
             } else {
