@@ -37,10 +37,12 @@ struct WazuApp: App {
                 Button("Sign Out of Hulu") { app.signOut() }
             }
             CommandMenu("Go") {
-                ForEach(Array(Place.allCases.enumerated()), id: \.element) { index, place in
+                ForEach(Array(Place.allCases.filter { $0 != .search }.enumerated()), id: \.element) { index, place in
                     Button(place.title) { app.place = place }
                         .keyboardShortcut(KeyEquivalent(Character(String(index + 1))), modifiers: .command)
                 }
+                Button("Search") { app.place = .search }
+                    .keyboardShortcut("f", modifiers: .command)
                 Divider()
                 Button("Back") { app.path.removeLast() }
                     .keyboardShortcut("[", modifiers: .command)

@@ -17,7 +17,7 @@ itself keeps in the browser.
 
 ## Features
 
-- Sidebar: Home, TV, Movies, Live TV, My Stuff, Search (⌘1–⌘6); ⌘[ goes back a page
+- Sidebar: Home, TV Shows, Movies, Sports, Live TV, My Stuff, TV (⌘1–⌘7) and Search (⌘F); ⌘[ goes back a page
 - Rows of artwork per hub; series pages list seasons and episodes; a Play button resumes
 - Live TV: every channel in the guide with what's on now
 - Player: AVKit's floating controls (full screen, Picture in Picture, audio/subtitle
@@ -28,7 +28,8 @@ itself keeps in the browser.
 
 | Shortcut | Action |
 | --- | --- |
-| ⌘1 – ⌘6 | Sidebar hubs (Search is ⌘6) |
+| ⌘1 – ⌘7 | Sidebar places |
+| ⌘F | Search |
 | ⌘[ | Back |
 | ⌘P | Play / Pause |
 | ⌘← / ⌘→ | Skip back / forward 10 s |
