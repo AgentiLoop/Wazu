@@ -171,9 +171,10 @@ final class AppModel: ObservableObject {
 #if os(macOS)
 struct ContentView: View {
     @EnvironmentObject var app: AppModel
+    @State private var columns = NavigationSplitViewVisibility.automatic
 
     var body: some View {
-        NavigationSplitView {
+        NavigationSplitView(columnVisibility: $columns) {
             List(Place.allCases, selection: $app.place) { place in
                 Label(place.title, systemImage: place.icon).tag(place)
             }
@@ -214,6 +215,7 @@ struct ContentView: View {
         }
         .frame(minWidth: 960, minHeight: 600)
         .background(FullScreenCapable())
+        .fullScreenSidebar($columns)
         .hidesToolbarInFullScreen()
         .sheet(isPresented: $app.showSignIn) {
             SignInView { app.session += 1 }
