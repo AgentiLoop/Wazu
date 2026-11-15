@@ -175,12 +175,13 @@ struct Item: Identifiable, Hashable, Tile {
     }
 }
 
-/// A live channel from the guide, with what is on now.
+/// A live channel from the guide, with what is on now and everything the guide lists for it.
 struct Channel: Identifiable, Hashable {
     let id: String
     let name: String
     let logo: URL?
     var program: Program?
+    var programs: [Program] = []
 }
 
 struct Program: Hashable {

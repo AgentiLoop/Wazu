@@ -94,8 +94,9 @@ actor HuluClient: StreamingService {
 
     // MARK: Live
 
-    /// Every live channel in the guide, with what is on right now.
-    func channels() async throws -> [Channel] {
+    /// Every live channel in the guide, with what is on right now and what it airs: between the two times
+    /// when they are given (the guide's window), else whatever Hulu lists by default (about two hours).
+    func channels(from start: Date? = nil, to end: Date? = nil) async throws -> [Channel] {
         let views = try await json("GET", URL(string: "\(Self.guide)/views")!)
         let all = (views["views"] as? [[String: Any]] ?? []).first { $0["id"] as? String == "hulu:guide:all-channels" }
         var channels = ((all?["details"] as? [String: Any])?["channels"] as? [[String: Any]] ?? []).compactMap { c -> Channel? in
@@ -104,9 +105,14 @@ actor HuluClient: StreamingService {
                            logo: (c["logoUrl"] as? String).flatMap(URL.init(string:)), program: nil)
         }
         guard !channels.isEmpty else { return [] }
-        let listing = try await json("POST", URL(string: "\(Self.guide)/listing")!, body: ["channels": channels.map(\.id)])
-        let now = Date()
         let formatter = ISO8601DateFormatter()
+        var body: [String: Any] = ["channels": channels.map(\.id)]
+        if let start, let end {
+            body["start_time"] = formatter.string(from: start)
+            body["end_time"] = formatter.string(from: end)
+        }
+        let listing = try await json("POST", URL(string: "\(Self.guide)/listing")!, body: body)
+        let now = Date()
         for entry in listing["channels"] as? [[String: Any]] ?? [] {
             guard let id = entry["id"] as? String, let index = channels.firstIndex(where: { $0.id == id }) else { continue }
             let programs = (entry["programs"] as? [[String: Any]] ?? []).compactMap { p -> Program? in
@@ -115,6 +121,7 @@ actor HuluClient: StreamingService {
                       let end = (p["airingEnd"] as? String).flatMap(formatter.date(from:)) else { return nil }
                 return Program(eab: eab, headline: headline, start: start, end: end)
             }
+            channels[index].programs = programs
             channels[index].program = programs.first { $0.start <= now && now < $0.end } ?? programs.first
         }
         return channels

@@ -535,7 +535,48 @@ struct ItemCard: View {
 
 // MARK: - Live
 
+/// Live TV has two faces: the guide (channels down the side, the next hours across) and the plain list
+/// of channels with what is on now. The one last picked is the one shown next time.
 struct LiveView: View {
+    @EnvironmentObject var app: AppModel
+    @ObservedObject var search: LiveSearch
+    @AppStorage("liveGuide") private var showsGuide = true
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Picker("Live TV", selection: $showsGuide) {
+                Text("Channels").tag(false)
+                Text("Guide").tag(true)
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .frame(maxWidth: 240)
+            .padding(.vertical, 10)
+            if showsGuide {
+                GuideView(search: search, tint: .teal) { start, end in
+                    try await app.client.channels(from: start, to: end).map { channel in
+                        // An airing's EAB is its own (it ends in the airing's id), so it names the programme.
+                        GuideChannel(id: channel.id, name: channel.name, logo: channel.logo, programs: channel.programs.map {
+                            GuideProgram(id: $0.eab, title: $0.headline, start: $0.start, end: $0.end)
+                        })
+                    }
+                } logo: { channel in
+                    ChannelLogo(url: URL(string: (channel.logo?.absoluteString ?? "") + "&size=240x80%7Cmax&format=png"))
+                } onSelect: { channel, program in
+                    app.play(Item(id: channel.id, kind: "live", title: program.title, subtitle: channel.name,
+                                  artwork: nil, eab: program.id, channelId: channel.id))
+                }
+                .id(app.session)
+            } else {
+                ChannelList(search: search)
+            }
+        }
+        .navigationTitle("Live TV")
+    }
+}
+
+/// Every channel with what is on now; a click plays it.
+private struct ChannelList: View {
     @EnvironmentObject var app: AppModel
     @ObservedObject var search: LiveSearch
     @State private var channels: [Channel] = []
@@ -595,7 +636,6 @@ struct LiveView: View {
                 }
             }
         }
-        .navigationTitle("Live TV")
         .task(id: app.session) {
             do { channels = try await app.client.channels() } catch { self.error = error.localizedDescription }
             loaded = true
