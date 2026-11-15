@@ -411,7 +411,7 @@ struct HubView: View {
             } else if let error {
                 ContentUnavailableView(error, systemImage: "exclamationmark.triangle")
             } else {
-                Color.clear
+                ProgressView()
             }
         }
         .navigationTitle(title)
@@ -540,6 +540,7 @@ struct LiveView: View {
     @ObservedObject var search: LiveSearch
     @State private var channels: [Channel] = []
     @State private var error: String?
+    @State private var loaded = false
 
     private var query: String { search.text }
 
@@ -556,7 +557,8 @@ struct LiveView: View {
             if let error {
                 ContentUnavailableView(error, systemImage: "exclamationmark.triangle")
             } else if channels.isEmpty {
-                Color.clear
+                // The spinner is for the guide loading only: a guide that came back empty shows nothing.
+                if loaded { Color.clear } else { ProgressView() }
             } else if filtered.isEmpty {
                 ContentUnavailableView.search(text: query)
             } else {
@@ -596,6 +598,7 @@ struct LiveView: View {
         .navigationTitle("Live TV")
         .task(id: app.session) {
             do { channels = try await app.client.channels() } catch { self.error = error.localizedDescription }
+            loaded = true
         }
     }
 }
@@ -648,6 +651,7 @@ struct SearchView: View {
                     ForEach(results) { item in ItemCard(item: item) }
                 }
                 .padding(.horizontal, 20)
+                if searching { ProgressView().padding() }
             }
         }
         .navigationTitle("Search")
