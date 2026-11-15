@@ -182,6 +182,9 @@ struct Channel: Identifiable, Hashable {
     let logo: URL?
     var program: Program?
     var programs: [Program] = []
+
+    /// The logo at the size the app draws it (img.hulu.com wants a size and a format).
+    var logoImage: URL? { logo.flatMap { URL(string: $0.absoluteString + "&size=240x80%7Cmax&format=png") } }
 }
 
 struct Program: Hashable {

@@ -556,12 +556,10 @@ struct LiveView: View {
                 GuideView(search: search, tint: .teal) { start, end in
                     try await app.client.channels(from: start, to: end).map { channel in
                         // An airing's EAB is its own (it ends in the airing's id), so it names the programme.
-                        GuideChannel(id: channel.id, name: channel.name, logo: channel.logo, programs: channel.programs.map {
+                        GuideChannel(id: channel.id, name: channel.name, logo: channel.logoImage, programs: channel.programs.map {
                             GuideProgram(id: $0.eab, title: $0.headline, start: $0.start, end: $0.end)
                         })
                     }
-                } logo: { channel in
-                    ChannelLogo(url: URL(string: (channel.logo?.absoluteString ?? "") + "&size=240x80%7Cmax&format=png"))
                 } onSelect: { channel, program in
                     app.play(Item(id: channel.id, kind: "live", title: program.title, subtitle: channel.name,
                                   artwork: nil, eab: program.id, channelId: channel.id))
@@ -612,7 +610,7 @@ private struct ChannelList: View {
                                               artwork: nil, eab: program.eab, channelId: channel.id))
                             } label: {
                                 HStack(spacing: 12) {
-                                    ChannelLogo(url: URL(string: (channel.logo?.absoluteString ?? "") + "&size=240x80%7Cmax&format=png"))
+                                    ChannelLogo(url: channel.logoImage)
                                         .frame(width: 120, height: 40)
                                     VStack(alignment: .leading) {
                                         Text(channel.name).font(.headline)
@@ -639,34 +637,6 @@ private struct ChannelList: View {
         .task(id: app.session) {
             do { channels = try await app.client.channels() } catch { self.error = error.localizedDescription }
             loaded = true
-        }
-    }
-}
-
-/// img.hulu.com answers a not-yet-rendered size with 200 "Submitted for processing"
-/// (which URLCache keeps for 30 days), so drop that response and retry until the PNG is ready.
-struct ChannelLogo: View {
-    let url: URL?
-    @State private var image: PlatformImage?
-
-    var body: some View {
-        Group {
-            if let image {
-                Image(platformImage: image).resizable().aspectRatio(contentMode: .fit)
-            } else {
-                Image(systemName: "tv")
-            }
-        }
-        .task(id: url) {
-            guard let url else { return }
-            let request = URLRequest(url: url)
-            for _ in 0..<5 {
-                if let (data, _) = try? await URLSession.shared.data(for: request) {
-                    if let loaded = PlatformImage(data: data) { image = loaded; return }
-                    URLCache.shared.removeCachedResponse(for: request)
-                }
-                try? await Task.sleep(for: .seconds(2))
-            }
         }
     }
 }
