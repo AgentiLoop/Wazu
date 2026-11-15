@@ -120,7 +120,22 @@ actor HuluClient: StreamingService {
 
     // MARK: Playback
 
-    func playback(eab: String, channelId: String?) async throws -> Playback {
+    /// The episode that follows the one with this EAB in its series: the next one in the season, or the next
+    /// season's first after a season's last. Nil when none is left. The up-next list starts with the episode
+    /// itself; what follows it is the next episode when it is of the same series, and a suggestion from
+    /// another series otherwise (after a series' last episode, and after a movie).
+    func nextEpisode(after eab: String) async throws -> Item? {
+        var c = URLComponents(string: "\(Self.discover)/browse/upnext")!
+        c.queryItems = [.init(name: "current_eab", value: eab), .init(name: "schema", value: "1"), .init(name: "language", value: "en")]
+        let items = try await json("GET", c.url!)["items"] as? [[String: Any]] ?? []
+        guard items.count > 1, let series = items[0]["series_id"] as? String, items[1]["series_id"] as? String == series,
+              let next = Item(json: items[1]), next.eab != nil else { return nil }
+        return next
+    }
+
+    /// `resume`: seconds into the episode or movie to carry on from (nil: where Hulu has it).
+    /// `credits`: seconds into the stream at which the end credits start, when Hulu says.
+    func playback(eab: String, channelId: String?, resume: Double?) async throws -> (playback: Playback, credits: Double?, breaks: Breaks) {
         let guid = HuluSession.stored()?.serial
             ?? HTTPCookieStorage.shared.cookies?.first { $0.name == "guid" && $0.domain.hasSuffix("hulu.com") }?.value
             ?? UUID().uuidString.replacingOccurrences(of: "-", with: "")
@@ -149,9 +164,30 @@ actor HuluClient: StreamingService {
             throw HuluError.badResponse(result["message"] as? String ?? "playlist")
         }
         let position = result["initial_position"] as? Double ?? 0
-        return Playback(streamURL: stream, licenseURL: license, certificateURL: cert,
-                        resume: position > 0 ? position / 1000 : 0,
-                        isLive: result["asset_playback_type"] as? String == "LIVE")
+        let breaks = Breaks(breaks: (result["breaks"] as? [[String: Any]] ?? []).compactMap {
+            guard let position = $0["pos"] as? Double, let duration = $0["duration"] as? Double else { return nil }
+            return (position / 1000, duration / 1000)
+        })
+        let metadata = result["video_metadata"] as? [String: Any]
+        let frameRate = metadata?["frame_rate"] as? Double ?? 24
+        /// Seconds into the stream of one of Hulu's timecodes ("00:21:32;17": hours, minutes, seconds, frames).
+        func time(_ code: Any?) -> Double? {
+            let parts = (code as? String ?? "").split(whereSeparator: { ":;".contains($0) }).compactMap { Double($0) }
+            guard parts.count == 4 else { return nil }
+            return breaks.streamTime(parts[0] * 3600 + parts[1] * 60 + parts[2] + parts[3] / frameRate)
+        }
+        // A recap ("Previously on…") and the opening credits are each marked with a start and an end.
+        let skips = (metadata?["markers"] as? [[String: Any]] ?? []).compactMap { marker -> Skip? in
+            let titles = ["Recap": "Skip Recap", "Opening Credit": "Skip Intro"]
+            guard let title = titles[marker["type"] as? String ?? ""],
+                  let start = time(marker["start"]), let end = time(marker["end"]), end > start else { return nil }
+            return Skip(title: title, start: start, end: end)
+        }
+        let isLive = result["asset_playback_type"] as? String == "LIVE"
+        return (Playback(streamURL: stream, licenseURL: license, certificateURL: cert,
+                         resume: resume.map { isLive ? 0 : breaks.streamTime($0) } ?? (position > 0 ? position / 1000 : 0),
+                         isLive: isLive, skips: skips),
+                time(metadata?["end_credits_time"]), breaks)
     }
 
     /// The FairPlay application certificate (DER), cached.
@@ -238,5 +274,26 @@ enum HuluError: LocalizedError {
         case .badResponse(let what): "Unexpected answer from Hulu (\(what))."
         case .signIn(let message): message
         }
+    }
+}
+
+/// What a stream carries besides the episode or movie itself: where in it each break starts and how long the
+/// break is, in seconds. Hulu's own times (the markers, the end credits) count the episode alone; the player's
+/// times count the breaks too. Seen so far: a 5-second network bumper at the very start, on a plan without ads.
+struct Breaks: Sendable {
+    var breaks: [(position: Double, duration: Double)] = []
+
+    /// The player's time for a time in the episode.
+    func streamTime(_ content: Double) -> Double {
+        content + breaks.filter { $0.position <= content }.reduce(0) { $0 + $1.duration }
+    }
+
+    /// The time in the episode for one of the player's times (a time inside a break is where the break starts).
+    func contentTime(_ stream: Double) -> Double {
+        var content = stream
+        for part in breaks.sorted(by: { $0.position < $1.position }) where content >= part.position {
+            content = max(part.position, content - part.duration)
+        }
+        return content
     }
 }

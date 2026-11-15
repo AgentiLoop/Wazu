@@ -9,6 +9,7 @@
 
 import SwiftUI
 import AVKit
+import Combine
 import WazKit
 
 /// Where the sidebar can take you; TV is last: the player.
@@ -64,6 +65,22 @@ struct Destination: Hashable {
     var searchable = false
 }
 
+/// The last episode or movie played and how far in, kept between launches.
+struct LastPlayed: Codable {
+    let id: String
+    let title: String
+    let subtitle: String?
+    let eab: String
+    /// Seconds into the episode or movie itself (a bumper before it is not counted).
+    var position: Double
+    /// The player was still up when this was saved (not stopped): the next launch carries straight on.
+    var open = true
+
+    /// The EAB's entity part ("EAB::<entity>::<asset>::<bundle>"): the same episode whatever row it was picked from.
+    var entity: String { Self.entity(eab) }
+    static func entity(_ eab: String) -> String { eab.components(separatedBy: "::").dropFirst().first ?? eab }
+}
+
 @MainActor
 final class AppModel: ObservableObject {
     let client = HuluClient()
@@ -88,10 +105,34 @@ final class AppModel: ObservableObject {
         signInObserver = NotificationCenter.default.addObserver(forName: HuluAuth.signInRequired, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.showSignIn = true }
         }
-        if !HuluClient.isSignedIn {
-            Task {
-                if await HuluAuth.recover() { session += 1 } else { showSignIn = true }
+        player.onEnd = { [weak self] in self?.playNext(atEnd: true) }
+        // Once a second of playback: how far in the remembered episode or movie is, and whether its end
+        // credits have started (then the next episode plays).
+        timeObserver = player.player.addPeriodicTimeObserver(forInterval: CMTime(seconds: 1, preferredTimescale: 1), queue: .main) { [weak self] time in
+            MainActor.assumeIsolated {
+                // Not while a stream is loading: a time that arrives then belongs to the one before it.
+                guard let self, !self.player.isLoading, self.player.current?.id == self.last?.id, time.seconds >= 1 else { return }
+                self.last?.position = self.breaks.contentTime(time.seconds)
+                if let credits = self.credits, credits.id == self.player.current?.id, time.seconds >= credits.start {
+                    self.credits = nil
+                    self.playNext(atEnd: false)
+                }
             }
+        }
+        // The TV tab draws from this model, so it hears when what is playing changes. Stopped (Stop, a
+        // sign-out, an error) also means the next launch does not start it again.
+        currentWatch = player.$current.dropFirst().sink { [weak self] current in
+            if current == nil { self?.last?.open = false }
+            self?.objectWillChange.send()
+        }
+        // Signed in (or signed in again with the saved credentials): if the app was quit with the player
+        // still up, carry straight on with what was playing.
+        Task {
+            if !HuluClient.isSignedIn {
+                guard await HuluAuth.recover() else { showSignIn = true; return }
+                session += 1
+            }
+            if last?.open == true { resume() }
         }
     }
 
@@ -108,19 +149,97 @@ final class AppModel: ObservableObject {
     /// The iPhone's full-screen player is up.
     @Published var showPlayer = false
 
+    /// The last episode or movie played, saved as it plays so it can carry on after the player or the app is quit.
+    private(set) var last: LastPlayed? = UserDefaults.standard.data(forKey: "lastPlayed")
+        .flatMap({ try? JSONDecoder().decode(LastPlayed.self, from: $0) }) {
+        didSet { UserDefaults.standard.set(last.flatMap { try? JSONEncoder().encode($0) }, forKey: "lastPlayed") }
+    }
+    /// Where the user was when they picked what is playing: the app goes back there when nothing is left to play.
+    private var origin: (place: Place, path: [Destination])?
+    private var timeObserver: Any?
+    private var currentWatch: AnyCancellable?
+
     /// Starts playback and shows it on the TV tab (or in the split-out window, if that is open);
     /// on iPhone, in the full-screen player.
     func play(_ item: Item) {
         guard let eab = item.eab else { return }
-        let channelId = item.isLive ? item.channelId : nil
-        player.play(NowPlaying(id: item.id, title: item.title, subtitle: item.subtitle)) { [client] in
-            try await client.playback(eab: eab, channelId: channelId)
+        play(NowPlaying(id: item.id, title: item.title, subtitle: item.subtitle), eab: eab,
+             channelId: item.isLive ? item.channelId : nil, show: true)
+    }
+
+    /// Carries on with the last episode or movie from where it was left.
+    func resume() {
+        guard let last else { return }
+        play(NowPlaying(id: last.id, title: last.title, subtitle: last.subtitle), eab: last.eab, channelId: nil, show: true)
+    }
+
+    /// An episode or movie becomes the remembered one; played again, it carries on from where it was left.
+    /// `show` brings the player up and notes where the user was.
+    private func play(_ what: NowPlaying, eab: String, channelId: String?, show: Bool) {
+        let position = last?.entity == LastPlayed.entity(eab) ? last?.position ?? 0 : 0
+        if channelId != nil {
+            last?.open = false
+        } else {
+            last = LastPlayed(id: what.id, title: what.title, subtitle: what.subtitle, eab: eab, position: position)
         }
+        credits = nil
+        breaks = Breaks()
+        player.play(what) { [client, weak self] in
+            let answer = try await client.playback(eab: eab, channelId: channelId, resume: position > 0 ? position : nil)
+            await MainActor.run { [weak self] in
+                self?.credits = answer.credits.map { (what.id, $0) }
+                self?.breaks = answer.breaks
+            }
+            return answer.playback
+        }
+        guard show else { return }
         #if os(macOS)
-        place = .tv
+        if place != .tv {
+            origin = (place, path)
+            place = .tv
+        }
         #else
         showPlayer = true
         #endif
+    }
+
+    /// Where the end credits of what is playing start, in the player's seconds (from the playlist answer).
+    /// Cleared once the playhead has reached it, so the next episode is asked for once.
+    private var credits: (id: String, start: Double)?
+    /// The breaks in the stream that is playing: what turns the player's time into the time in the episode.
+    private var breaks = Breaks()
+
+    /// The next episode plays: the next in the season, or the next season's first. This is called when the
+    /// end credits start, and again at the very end (`atEnd`) for anything that has no credits time. With no
+    /// episode left the credits play on, and at the end the player closes and the app is back where the user
+    /// picked what was playing.
+    private func playNext(atEnd: Bool) {
+        guard let finished = player.current else { return }
+        let eab = last?.id == finished.id ? last?.eab : nil
+        Task {
+            var next: Item?
+            if let eab {
+                // The question could not be asked (no network, say): the player stays as it is.
+                do { next = try await client.nextEpisode(after: eab) } catch { return }
+            }
+            guard player.current == finished else { return }
+            if let next, let eab = next.eab {
+                play(NowPlaying(id: next.id, title: next.title, subtitle: next.subtitle), eab: eab, channelId: nil, show: false)
+                return
+            }
+            guard atEnd else { return }
+            last = nil
+            player.stop()
+            #if os(macOS)
+            if place == .tv, let origin {
+                place = origin.place
+                path = origin.path
+            }
+            origin = nil
+            #else
+            showPlayer = false
+            #endif
+        }
     }
 
     /// Opens an item's page; shows and movies open under the TV Shows and Movies places so the sidebar follows.
@@ -161,6 +280,7 @@ final class AppModel: ObservableObject {
             return
         }
         player.stop()
+        last = nil
         HuluClient.signOut()
         path = []
         session += 1
@@ -240,8 +360,14 @@ struct ContentView: View {
                 ContentUnavailableView(error, systemImage: "play.slash")
                     .foregroundStyle(.white)
             } else if app.player.current == nil {
-                ContentUnavailableView("Nothing Playing", systemImage: "tv", description: Text("Pick something to watch."))
-                    .foregroundStyle(.white)
+                ContentUnavailableView {
+                    Label("Nothing Playing", systemImage: "tv")
+                } description: {
+                    Text("Pick something to watch.")
+                } actions: {
+                    if let last = app.last { Button("Resume \(last.title)") { app.resume() } }
+                }
+                .foregroundStyle(.white)
             } else {
                 PlayerContainer(controller: app.player)
             }
