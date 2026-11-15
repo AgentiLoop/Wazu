@@ -7,6 +7,8 @@
 //
 
 import Foundation
+import ImageIO
+import Vision
 import WazKit
 
 actor HuluClient: StreamingService {
@@ -177,17 +179,81 @@ actor HuluClient: StreamingService {
             return breaks.streamTime(parts[0] * 3600 + parts[1] * 60 + parts[2] + parts[3] / frameRate)
         }
         // A recap ("Previously on…") and the opening credits are each marked with a start and an end.
-        let skips = (metadata?["markers"] as? [[String: Any]] ?? []).compactMap { marker -> Skip? in
+        let markers = (metadata?["markers"] as? [[String: Any]] ?? []).compactMap { marker -> Skip? in
             let titles = ["Recap": "Skip Recap", "Opening Credit": "Skip Intro"]
             guard let title = titles[marker["type"] as? String ?? ""],
                   let start = time(marker["start"]), let end = time(marker["end"]), end > start else { return nil }
             return Skip(title: title, start: start, end: end)
         }
         let isLive = result["asset_playback_type"] as? String == "LIVE"
+        let findSkips: (@Sendable () async -> [Skip])? = isLive ? nil : (result["thumbnail_endpoint"] as? String).flatMap(URL.init(string:)).map { thumbnails in
+            { [self] in await self.marvelIntro(eab: eab, thumbnails: thumbnails, breaks: breaks, after: markers.map(\.end)) }
+        }
         return (Playback(streamURL: stream, licenseURL: license, certificateURL: cert,
                          resume: resume.map { isLive ? 0 : breaks.streamTime($0) } ?? (position > 0 ? position / 1000 : 0),
-                         isLive: isLive, skips: skips),
+                         isLive: isLive, skips: markers, findSkips: findSkips),
                 time(metadata?["end_credits_time"]), breaks)
+    }
+
+    /// The times (seconds into the episode or movie) at which "MARVEL STUDIOS" was read in the thumbnails of
+    /// those already looked at, by EAB (empty: looked, not there).
+    private var marvelLogos: [String: [Double]] = [:]
+
+    /// The Marvel Studios logo near the front of a Marvel title ("Skip Marvel Intro"). The playlist answer marks
+    /// at most the first part of it (WandaVision's "Opening Credit" ends 6 to 15 seconds before the logo's words
+    /// are read), so it is found by reading: the thumbnails of the first five minutes, ten seconds apart, go
+    /// through text recognition, and the logo is where "MARVEL STUDIOS" is read, which is near its end. The
+    /// button shows from the end of a marked part that ended up to 45 seconds before the words (`after`: those
+    /// ends, in the player's seconds), else from 30 seconds before them. It jumps to the last thumbnail that
+    /// shows the words: how long after that thumbnail the logo ends cannot be told, and this way it never lands
+    /// inside the show.
+    private func marvelIntro(eab: String, thumbnails: URL, breaks: Breaks, after ends: [Double]) async -> [Skip] {
+        if marvelLogos[eab] == nil { marvelLogos[eab] = await marvelStudios(inThumbnails: thumbnails) }
+        guard let shown = marvelLogos[eab]?.first else { return [] }
+        // The words stay up for a thumbnail or two.
+        let first = breaks.streamTime(shown), end = breaks.streamTime(marvelLogos[eab]?.last { $0 <= shown + 20 } ?? shown)
+        let start = ends.filter { $0 <= first && first - $0 <= 45 }.max() ?? max(0, first - 30)
+        return end > start ? [Skip(title: "Skip Marvel Intro", start: start, end: end)] : []
+    }
+
+    /// The times of the thumbnails in which "MARVEL STUDIOS" is read, among the first five minutes (nil: the
+    /// thumbnails could not be fetched). Hulu's thumbnails are one file, "thumbs" under the playlist answer's
+    /// thumbnail link: the number of pictures in 8 bytes, that many 8-byte offsets (big-endian), then the
+    /// pictures (JPEGs, each up to the next offset). There is a picture for every second of the episode, but
+    /// the picture only changes every ten, so every tenth is fetched (a range request each, 10 to 20 KB).
+    private func marvelStudios(inThumbnails thumbnails: URL) async -> [Double]? {
+        let file = thumbnails.appendingPathComponent("thumbs")
+        func bytes(_ range: Range<Int>) async -> Data? {
+            var request = URLRequest(url: file)
+            request.setValue("bytes=\(range.lowerBound)-\(range.upperBound - 1)", forHTTPHeaderField: "Range")
+            guard let (data, response) = try? await session.data(for: request),
+                  (response as? HTTPURLResponse)?.statusCode == 206 else { return nil }
+            return data
+        }
+        // The count, and the offsets of the first five minutes' pictures.
+        guard let table = await bytes(0..<8 * 303) else { return nil }
+        func number(_ at: Int) -> Int { at + 8 <= table.count ? table[at..<at + 8].reduce(0) { $0 << 8 | Int($1) } : 0 }
+        var pictures: [(time: Double, jpeg: Data)] = []
+        for second in stride(from: 0, through: 300, by: 10) where second + 1 < number(0) {
+            let from = number(8 + 8 * second), to = number(16 + 8 * second)
+            guard from < to, to - from < 1_000_000, let jpeg = await bytes(from..<to) else { return nil }
+            pictures.append((Double(second), jpeg))
+        }
+        return await Task.detached(priority: .utility) { [pictures] in
+            pictures.filter { Self.showsMarvelStudios($0.jpeg) }.map(\.time)
+        }.value
+    }
+
+    /// Is "MARVEL STUDIOS" all a picture shows? The logo is also read while it is still forming ("PARVEL STUDIO",
+    /// "MARVEL STUD"), so this much of it in any of the reader's guesses counts. A title card that has the words
+    /// among others ("MARVEL STUDIOS' WandaVision" in a recap) is not the logo.
+    nonisolated static func showsMarvelStudios(_ jpeg: Data) -> Bool {
+        guard let source = CGImageSourceCreateWithData(jpeg as CFData, nil),
+              let image = CGImageSourceCreateImageAtIndex(source, 0, nil) else { return false }
+        let request = VNRecognizeTextRequest()
+        try? VNImageRequestHandler(cgImage: image).perform([request])
+        let lines = request.results ?? []
+        return lines.count == 1 && lines[0].topCandidates(10).contains { $0.string.uppercased().contains("ARVEL STUD") }
     }
 
     /// The FairPlay application certificate (DER), cached.
