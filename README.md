@@ -19,7 +19,8 @@ itself keeps in the browser.
 
 - Sidebar: Home, TV Shows, Movies, Sports, Live TV, My Stuff, TV (⌘1–⌘7) and Search (⌘F); ⌘[ goes back a page
 - Rows of artwork per hub; series pages list seasons and episodes; a Play button resumes
-- Live TV: every channel in the guide with what's on now
+- Live TV: a TV guide (every channel with what it airs in the next six hours; what's on now plays
+  with a click) and the plain list of channels with what's on now
 - Player: AVKit's floating controls (full screen, Picture in Picture, audio/subtitle
   menus), Play/Pause ⌘P, skip ±10 s, Stop ⌘., Esc closes; the keyboard's media keys work
 - Sign-in is remembered between launches (Wazu > Sign Out of Hulu clears it)
