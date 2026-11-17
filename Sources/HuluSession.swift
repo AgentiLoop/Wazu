@@ -100,6 +100,13 @@ final class HuluSession {
         guard let current = Self.stored() else { return nil }
         if let rejected, rejected != current.userToken { return current.userToken }
         if rejected == nil, current.expiresAt.map({ $0 > Date() }) ?? true { return current.userToken }
+        if current.deviceToken == "iwaz-review" {
+            try await HuluAuth.renewReview()
+            guard let renewed = Self.stored(), renewed.deviceToken == "iwaz-review" else {
+                throw HuluError.signIn("Please sign in to App Review again.")
+            }
+            return renewed.userToken
+        }
         if let refreshTask { return try await refreshTask.value.userToken }
         let version = generation
         let task = Task<HuluTokens, Error> {
