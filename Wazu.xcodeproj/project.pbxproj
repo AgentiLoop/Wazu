@@ -11,6 +11,7 @@
 		0C603BB087E4FA6FFF42B2AC /* WazuApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00FB43B1CEB34F9C56FAA38A /* WazuApp.swift */; platformFilters = (macos, ); };
 		3CF27BDCE41436E1D070B0C6 /* HuluClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 099C2F5A3339CE49E82C51CD /* HuluClient.swift */; };
 		5A6BAAF95E5D735651874B68 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 093EB04457F3E026464CCB53 /* AppIcon.icon */; platformFilters = (ios, ); };
+		7673973BB23879269DBE1DD5 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 11D484F805CAE80583D09781 /* PrivacyInfo.xcprivacy */; platformFilters = (ios, ); };
 		787BBC31C5D8F8074B3D5F52 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 85C201962BC1343D24ABA699 /* Assets.xcassets */; platformFilters = (ios, ); };
 		8C70E86A918A449A3BD56D9C /* Updater.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAEE41E40D627B42F7A3683D /* Updater.swift */; platformFilters = (macos, ); };
 		958987F1820D5B8DF8F17596 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 62B285BF6878E442EBE3B8ED /* Assets.xcassets */; platformFilters = (macos, ); };
@@ -35,6 +36,7 @@
 		00FB43B1CEB34F9C56FAA38A /* WazuApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WazuApp.swift; sourceTree = "<group>"; };
 		093EB04457F3E026464CCB53 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = wrapper.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		099C2F5A3339CE49E82C51CD /* HuluClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HuluClient.swift; sourceTree = "<group>"; };
+		11D484F805CAE80583D09781 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		2491973EABAE889593628F3A /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		24A19869D7BE7E558AF9A799 /* WazuTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WazuTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		30931CFBD1F6D0BA61E82DC1 /* SignIn.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignIn.swift; sourceTree = "<group>"; };
@@ -105,6 +107,7 @@
 			children = (
 				093EB04457F3E026464CCB53 /* AppIcon.icon */,
 				85C201962BC1343D24ABA699 /* Assets.xcassets */,
+				11D484F805CAE80583D09781 /* PrivacyInfo.xcprivacy */,
 				5E7CA6ABEABD2D6BE034C6CE /* WazuiOSApp.swift */,
 			);
 			path = iOS;
@@ -201,6 +204,7 @@
 				5A6BAAF95E5D735651874B68 /* AppIcon.icon in Resources */,
 				958987F1820D5B8DF8F17596 /* Assets.xcassets in Resources */,
 				787BBC31C5D8F8074B3D5F52 /* Assets.xcassets in Resources */,
+				7673973BB23879269DBE1DD5 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
