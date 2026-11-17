@@ -80,7 +80,10 @@ final class HuluAuth: CredentialSignIn {
         NotificationCenter.default.post(name: signInRequired, object: nil)
     }
 
-    static var isReview: Bool { savedCredentials()?.profileID == "iwaz-review" }
+    static let reviewUsername = "apple-review"
+    static let reviewProfile = "iwaz-review"
+
+    static var isReview: Bool { savedCredentials()?.profileID == reviewProfile }
 
     static func reviewLogin(email: String, password: String) async throws {
         var request = URLRequest(url: URL(string: "https://iwaz.xcf.ai/v1/review/hulu/session")!)
@@ -93,7 +96,7 @@ final class HuluAuth: CredentialSignIn {
         let (data, response) = try await client.data(for: request)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         guard status == 200 else {
-            throw HuluError.signIn(status == 401 ? "Incorrect App Review credentials." :
+            throw HuluError.signIn(status == 401 ? "Wrong email or password." :
                 status == 429 ? "Too many attempts. Wait a minute." : "App Review session unavailable. Contact the developer.")
         }
         struct ReviewSession: Decodable {
@@ -152,6 +155,11 @@ final class HuluAuth: CredentialSignIn {
         pending = nil
         credentials = nil
         if !automatic { Self.stopRecovery() }
+        // The App Review demo account signs in through iwaz.xcf.ai; its one profile is picked automatically.
+        if email.lowercased() == Self.reviewUsername {
+            try await Self.reviewLogin(email: Self.reviewUsername, password: password)
+            return [SignInProfile(id: Self.reviewProfile, name: "App Review")]
+        }
         let tokens: HuluTokens
         do {
             tokens = try await HuluSession.shared.login(email: email, password: password)
@@ -188,6 +196,8 @@ final class HuluAuth: CredentialSignIn {
     }
 
     func pick(_ profile: SignInProfile, pin: String?) async throws {
+        // The review session was already installed by `login`.
+        if profile.id == Self.reviewProfile { Self.attemptedRecovery = false; return }
         if signedInOnWeb {
             // The web cookie is the session; a stale native session would take precedence over it.
             try HuluSession.shared.clear()
@@ -213,10 +223,6 @@ struct SignInView: View {
     let onSignedIn: () -> Void
     @State private var onWeb = false
     @State private var error: String?
-    @State private var review = false
-    @State private var username = ""
-    @State private var password = ""
-    @State private var busy = false
 
     var body: some View {
         if onWeb {
@@ -228,34 +234,6 @@ struct SignInView: View {
                 let onSite = webView.url?.host == "www.hulu.com" && webView.url?.path.hasPrefix("/login") == false
                 return onSite && HuluClient.hasWebSession
             }, onSignedIn: onSignedIn)
-        } else if review {
-            VStack(spacing: 16) {
-                Text("App Review Sign In").font(.title2)
-                Text("Use the demo credentials supplied in App Store Connect. Access is provided by iwaz.xcf.ai.")
-                TextField("Review username", text: $username).textContentType(.username)
-                    .autocorrectionDisabled()
-                SecureField("Review password", text: $password).textContentType(.password)
-                if let error { Text(error).foregroundStyle(.red) }
-                if busy { ProgressView() }
-                Button("Sign In") {
-                    busy = true
-                    error = nil
-                    HuluAuth.stopRecovery()
-                    Task { @MainActor in
-                        defer { busy = false }
-                        do {
-                            try await HuluAuth.reviewLogin(email: username.trimmingCharacters(in: .whitespacesAndNewlines), password: password)
-                            password = ""
-                            onSignedIn()
-                        } catch { self.error = error.localizedDescription }
-                    }
-                }
-                .disabled(busy || username.isEmpty || password.isEmpty)
-                Button("Back") { password = ""; error = nil; review = false }.disabled(busy)
-            }
-            .textFieldStyle(.roundedBorder)
-            .padding(24)
-            .frame(maxWidth: 400)
         } else {
             VStack(spacing: 0) {
                 CredentialSignInView(service: HuluAuth(), onSignedIn: onSignedIn)
@@ -271,8 +249,6 @@ struct SignInView: View {
                     }
                 }
                 .padding(.bottom, 20)
-                Button("App Review Sign In") { HuluAuth.stopRecovery(); error = nil; review = true }
-                    .padding(.bottom, 20)
                 if let error {
                     Text(error).foregroundStyle(.red).padding(.horizontal).padding(.bottom)
                 }
