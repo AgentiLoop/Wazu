@@ -6,7 +6,9 @@
 //
 
 import SwiftUI
+#if !os(tvOS) // Apple TV has no WebKit: website sign-in is iPhone, iPad and Mac only.
 import WebKit
+#endif
 import WazKit
 import Security
 
@@ -225,6 +227,9 @@ struct SignInView: View {
     @State private var error: String?
 
     var body: some View {
+        #if os(tvOS)
+        CredentialSignInView(service: HuluAuth(), onSignedIn: onSignedIn)
+        #else
         if onWeb {
             WebSignInView(title: "Sign in to Hulu", url: URL(string: "https://www.hulu.com/login")!,
                           size: CGSize(width: 900, height: 700), isSignedIn: { webView in
@@ -254,5 +259,6 @@ struct SignInView: View {
                 }
             }
         }
+        #endif
     }
 }

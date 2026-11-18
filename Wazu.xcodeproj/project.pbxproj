@@ -11,11 +11,12 @@
 		0C603BB087E4FA6FFF42B2AC /* WazuApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00FB43B1CEB34F9C56FAA38A /* WazuApp.swift */; platformFilters = (macos, ); };
 		3CF27BDCE41436E1D070B0C6 /* HuluClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 099C2F5A3339CE49E82C51CD /* HuluClient.swift */; };
 		5A6BAAF95E5D735651874B68 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 093EB04457F3E026464CCB53 /* AppIcon.icon */; platformFilters = (ios, ); };
-		7673973BB23879269DBE1DD5 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 11D484F805CAE80583D09781 /* PrivacyInfo.xcprivacy */; platformFilters = (ios, ); };
+		7673973BB23879269DBE1DD5 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 11D484F805CAE80583D09781 /* PrivacyInfo.xcprivacy */; platformFilters = (ios, tvos, ); };
 		787BBC31C5D8F8074B3D5F52 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 85C201962BC1343D24ABA699 /* Assets.xcassets */; platformFilters = (ios, ); };
 		8C70E86A918A449A3BD56D9C /* Updater.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAEE41E40D627B42F7A3683D /* Updater.swift */; platformFilters = (macos, ); };
 		958987F1820D5B8DF8F17596 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 62B285BF6878E442EBE3B8ED /* Assets.xcassets */; platformFilters = (macos, ); };
-		9DF54B3C7632C0F59A198B98 /* WazuiOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E7CA6ABEABD2D6BE034C6CE /* WazuiOSApp.swift */; platformFilters = (ios, ); };
+		9DB7EC858B63E05FCE4D4A90 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A0F68242937FA09955263A49 /* Assets.xcassets */; platformFilters = (tvos, ); };
+		9DF54B3C7632C0F59A198B98 /* WazuiOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E7CA6ABEABD2D6BE034C6CE /* WazuiOSApp.swift */; platformFilters = (ios, tvos, ); };
 		F1BBB934D90E0787465AD7D2 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2491973EABAE889593628F3A /* Models.swift */; };
 		F3909391B0110BF4EC7265BF /* SignIn.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30931CFBD1F6D0BA61E82DC1 /* SignIn.swift */; };
 		F4ADD49EFEA7317B569FC798 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84C2A5C05915EC98647BAAA6 /* ContentView.swift */; };
@@ -34,7 +35,7 @@
 
 /* Begin PBXFileReference section */
 		00FB43B1CEB34F9C56FAA38A /* WazuApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WazuApp.swift; sourceTree = "<group>"; };
-		093EB04457F3E026464CCB53 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = wrapper.icon; path = AppIcon.icon; sourceTree = "<group>"; };
+		093EB04457F3E026464CCB53 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		099C2F5A3339CE49E82C51CD /* HuluClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HuluClient.swift; sourceTree = "<group>"; };
 		11D484F805CAE80583D09781 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		2491973EABAE889593628F3A /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
@@ -46,6 +47,7 @@
 		7E9E208A79EC9CEB4016BD8B /* HuluSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HuluSession.swift; sourceTree = "<group>"; };
 		84C2A5C05915EC98647BAAA6 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		85C201962BC1343D24ABA699 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A0F68242937FA09955263A49 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		BAEE41E40D627B42F7A3683D /* Updater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Updater.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -67,6 +69,7 @@
 				FC3228B8353E059ED232EE7C /* iOS */,
 				7A7835BC55B11AF710AE02B9 /* Sources */,
 				5D07319C1CFE974CF17D633C /* Tests */,
+				CA2160FA0DB48F05FD8D40AE /* tvOS */,
 				BE3F4D87A164576DA0656C17 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -100,6 +103,14 @@
 				24A19869D7BE7E558AF9A799 /* WazuTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		CA2160FA0DB48F05FD8D40AE /* tvOS */ = {
+			isa = PBXGroup;
+			children = (
+				A0F68242937FA09955263A49 /* Assets.xcassets */,
+			);
+			path = tvOS;
 			sourceTree = "<group>";
 		};
 		FC3228B8353E059ED232EE7C /* iOS */ = {
@@ -204,6 +215,7 @@
 				5A6BAAF95E5D735651874B68 /* AppIcon.icon in Resources */,
 				958987F1820D5B8DF8F17596 /* Assets.xcassets in Resources */,
 				787BBC31C5D8F8074B3D5F52 /* Assets.xcassets in Resources */,
+				9DB7EC858B63E05FCE4D4A90 /* Assets.xcassets in Resources */,
 				7673973BB23879269DBE1DD5 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -248,12 +260,15 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				"ASSETCATALOG_COMPILER_APPICON_NAME[sdk=appletv*]" = "App Icon & Top Shelf Image";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 469UCUB275;
 				ENABLE_HARDENED_RUNTIME = NO;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Sources/Info.plist;
+				"INFOPLIST_FILE[sdk=appletvos*]" = tvOS/Info.plist;
+				"INFOPLIST_FILE[sdk=appletvsimulator*]" = tvOS/Info.plist;
 				"INFOPLIST_FILE[sdk=iphoneos*]" = iOS/Info.plist;
 				"INFOPLIST_FILE[sdk=iphonesimulator*]" = iOS/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -261,16 +276,19 @@
 					"@executable_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.starplayrx.wazu;
+				"PRODUCT_BUNDLE_IDENTIFIER[sdk=appletvos*]" = com.starplayrx.wazu.ios;
+				"PRODUCT_BUNDLE_IDENTIFIER[sdk=appletvsimulator*]" = com.starplayrx.wazu.ios;
 				"PRODUCT_BUNDLE_IDENTIFIER[sdk=iphoneos*]" = com.starplayrx.wazu.ios;
 				"PRODUCT_BUNDLE_IDENTIFIER[sdk=iphonesimulator*]" = com.starplayrx.wazu.ios;
 				PRODUCT_NAME = Wazu;
 				SDKROOT = auto;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator appletvos appletvsimulator macosx";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				"TARGETED_DEVICE_FAMILY[sdk=appletv*]" = 3;
 			};
 			name = Release;
 		};
@@ -334,6 +352,7 @@
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
+				TVOS_DEPLOYMENT_TARGET = 17.0;
 			};
 			name = Debug;
 		};
@@ -390,6 +409,7 @@
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
+				TVOS_DEPLOYMENT_TARGET = 17.0;
 			};
 			name = Release;
 		};
@@ -397,12 +417,15 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				"ASSETCATALOG_COMPILER_APPICON_NAME[sdk=appletv*]" = "App Icon & Top Shelf Image";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 469UCUB275;
 				ENABLE_HARDENED_RUNTIME = NO;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Sources/Info.plist;
+				"INFOPLIST_FILE[sdk=appletvos*]" = tvOS/Info.plist;
+				"INFOPLIST_FILE[sdk=appletvsimulator*]" = tvOS/Info.plist;
 				"INFOPLIST_FILE[sdk=iphoneos*]" = iOS/Info.plist;
 				"INFOPLIST_FILE[sdk=iphonesimulator*]" = iOS/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -410,16 +433,19 @@
 					"@executable_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.starplayrx.wazu;
+				"PRODUCT_BUNDLE_IDENTIFIER[sdk=appletvos*]" = com.starplayrx.wazu.ios;
+				"PRODUCT_BUNDLE_IDENTIFIER[sdk=appletvsimulator*]" = com.starplayrx.wazu.ios;
 				"PRODUCT_BUNDLE_IDENTIFIER[sdk=iphoneos*]" = com.starplayrx.wazu.ios;
 				"PRODUCT_BUNDLE_IDENTIFIER[sdk=iphonesimulator*]" = com.starplayrx.wazu.ios;
 				PRODUCT_NAME = Wazu;
 				SDKROOT = auto;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator appletvos appletvsimulator macosx";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				"TARGETED_DEVICE_FAMILY[sdk=appletv*]" = 3;
 			};
 			name = Debug;
 		};

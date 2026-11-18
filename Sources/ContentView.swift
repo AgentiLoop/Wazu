@@ -673,7 +673,7 @@ struct SearchView: View {
     var body: some View {
         VStack(spacing: 0) {
             TextField("Search Hulu", text: $query)
-                .textFieldStyle(.roundedBorder)
+                .roundedFields()
                 .font(.title3)
                 .padding(20)
                 .onSubmit { Task { await search() } }
