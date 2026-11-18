@@ -466,11 +466,12 @@ struct HubView: View {
                             Image(systemName: "play.circle.fill").font(.system(size: 56))
                                 .foregroundStyle(.white).shadow(radius: 6)
                         }
+                        .tileFocusEffect()
                         Text([focus.subtitle, focus.title].compactMap { $0 }.joined(separator: " · ")).font(.headline)
                     }
                     .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .tileButtonStyle()
                 .disabled(focus.eab == nil)
             }
         }
