@@ -98,12 +98,22 @@ final class AppModel: ObservableObject {
     @Published var playerFloats = false { didSet { player.floatsOnTop = playerFloats } }
     /// Bumped on sign-in/out so the views reload.
     @Published var session = 0
+    /// Why the sign-in sheet came back after a sign-in, shown on it; nil for a plain sign-in.
+    @Published var signInProblem: String?
+    func signedIn() {
+        signInProblem = nil
+        session += 1
+    }
     private var signInObserver: NSObjectProtocol?
 
     init() {
         player = PlayerController(service: client)
-        signInObserver = NotificationCenter.default.addObserver(forName: HuluAuth.signInRequired, object: nil, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated { self?.showSignIn = true }
+        signInObserver = NotificationCenter.default.addObserver(forName: HuluAuth.signInRequired, object: nil, queue: .main) { [weak self] note in
+            let problem = note.userInfo?["problem"] as? String
+            MainActor.assumeIsolated {
+                self?.signInProblem = problem
+                self?.showSignIn = true
+            }
         }
         player.onEnd = { [weak self] in self?.playNext(atEnd: true) }
         player.onClose = { [weak self] in self?.closePlayer() }
@@ -359,7 +369,7 @@ struct ContentView: View {
         .fullScreenSidebar($columns)
         .hidesToolbarInFullScreen()
         .sheet(isPresented: $app.showSignIn) {
-            SignInView { app.session += 1 }
+            SignInView(problem: app.signInProblem) { app.signedIn() }
         }
         .alert("Could Not Sign Out", isPresented: Binding(
             get: { app.signOutError != nil },

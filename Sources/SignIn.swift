@@ -11,6 +11,7 @@ import WebKit
 #endif
 import WazKit
 import Security
+import os
 
 @MainActor
 final class HuluAuth: CredentialSignIn {
@@ -77,9 +78,13 @@ final class HuluAuth: CredentialSignIn {
         recoveryTask = nil
     }
 
-    static func requireSignIn() {
+    private static let log = Logger(subsystem: "com.starplayrx.wazu", category: "SignIn")
+
+    /// Shows the sign-in sheet; `problem` (what Hulu answered) is shown on it and written to the log.
+    static func requireSignIn(problem: String? = nil) {
         stopRecovery()
-        NotificationCenter.default.post(name: signInRequired, object: nil)
+        if let problem { log.error("\(problem, privacy: .public)") }
+        NotificationCenter.default.post(name: signInRequired, object: nil, userInfo: problem.map { ["problem": $0] })
     }
 
     static let reviewUsername = "apple-review"
@@ -222,13 +227,17 @@ final class HuluAuth: CredentialSignIn {
 }
 
 struct SignInView: View {
+    var problem: String? = nil
     let onSignedIn: () -> Void
     @State private var onWeb = false
     @State private var error: String?
 
     var body: some View {
         #if os(tvOS)
-        CredentialSignInView(service: HuluAuth(), onSignedIn: onSignedIn)
+        VStack(spacing: 0) {
+            problemText
+            CredentialSignInView(service: HuluAuth(), onSignedIn: onSignedIn)
+        }
         #else
         if onWeb {
             WebSignInView(title: "Sign in to Hulu", url: URL(string: "https://www.hulu.com/login")!,
@@ -241,6 +250,7 @@ struct SignInView: View {
             }, onSignedIn: onSignedIn)
         } else {
             VStack(spacing: 0) {
+                problemText
                 CredentialSignInView(service: HuluAuth(), onSignedIn: onSignedIn)
                 Button("Sign In with Hulu Website") {
                     do {
@@ -260,5 +270,20 @@ struct SignInView: View {
             }
         }
         #endif
+    }
+
+    /// Why the last sign-in did not get the user in (what Hulu answered), above the form.
+    @ViewBuilder private var problemText: some View {
+        if let problem {
+            Label(problem, systemImage: "exclamationmark.triangle.fill")
+                .foregroundStyle(.orange)
+                .font(.callout)
+                #if !os(tvOS)
+                .textSelection(.enabled) // so the error can be copied and sent
+                #endif
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: 420, alignment: .leading)
+                .padding([.horizontal, .top], 20)
+        }
     }
 }

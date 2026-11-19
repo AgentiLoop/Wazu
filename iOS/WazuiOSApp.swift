@@ -45,7 +45,7 @@ struct PhoneContentView: View {
         .onChange(of: tab) { app.path = []; app.liveSearch.text = "" }
         .id(app.session)
         .sheet(isPresented: $app.showSignIn) {
-            SignInView { app.session += 1 }
+            SignInView(problem: app.signInProblem) { app.signedIn() }
                 .interactiveDismissDisabled()
         }
         .fullScreenCover(isPresented: $app.showPlayer) {

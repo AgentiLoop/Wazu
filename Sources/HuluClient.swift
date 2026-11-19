@@ -323,7 +323,15 @@ actor HuluClient: StreamingService {
             request.setValue("Bearer \(refreshed)", forHTTPHeaderField: "Authorization")
             (data, response) = try await session.data(for: request)
             status = (response as? HTTPURLResponse)?.statusCode ?? 0
-            if status == 401 { await HuluAuth.requireSignIn() }
+            if status == 401 {
+                // Refused even with a fresh session: say what Hulu answered instead of a silent sign-in loop.
+                let object = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+                let detail = (object?["message"] as? String ?? object?["code"] as? String
+                              ?? String(decoding: data.prefix(160), as: UTF8.self)).trimmingCharacters(in: .whitespacesAndNewlines)
+                await HuluAuth.requireSignIn(problem: "Hulu signed you in but refused to load your account (error 401"
+                    + (detail.isEmpty ? ")." : ": \(detail.prefix(160))).")
+                    + " Try signing in at hulu.com and accept anything it asks, then sign in here again.")
+            }
         }
         guard let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             throw HuluError.http(status, String(decoding: data.prefix(200), as: UTF8.self))
